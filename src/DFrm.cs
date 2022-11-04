@@ -985,7 +985,7 @@ namespace EasyEPlanner
 
         private bool AddDevParametersAndProperties(Node devNode, EplanDevice.IODevice dev)
         {
-            if ( (dev.Parameters.Count == 0 && dev.Parameters.Count == 0) || 
+            if ( dev.Parameters.Count == 0 || 
                 displayParamsBtn.Checked == false)
             {
                 return false;
