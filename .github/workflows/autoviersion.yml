@@ -1,25 +1,22 @@
 on:
   schedule:
     #- cron: '0 0 1 * *'
-    - cron: '14 15 * * *'
+    - cron: '15 15 * * *'
 
 jobs:
   autoversion:
     runs-on: windows-latest
 
     steps:
-      -uses: actions/checkout@v2
+      - uses: actions/checkout@v2
       
-      -name: Get month
-        shell: pwsh 
+      - name: Get month
         run: $Month = Get-Date -format 'MM'
 
-      -name: Get AssemblyInfo file path
-        shell: pwsh 
+      - name: Get AssemblyInfo file path
         run: $File = 'src/Properties/AssemblyInfo.cs' 
 
-      -name: Replace version
-        shell: pwsh 
+      - name: Replace version
         run: > 
           (Get-Content $File) -replace 
           '(?<start>(AssemblyVersion|AssemblyFileVersion)\(\"\d{4}\.)\d{2}(?<end>(\.\*|\.0\.0)"\))',
