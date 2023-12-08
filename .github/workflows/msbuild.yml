@@ -202,7 +202,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         name: ${{ github.ref_name }}
-        body: "Обновление от $date -d 'TZ='UTC+03' +'%B.%m.$Y'. Версия надстройки - ${{ steps.assembly-version.outputs.version }}"
+        body: "Обновление от $date -d +'%B.%m.$Y'. Версия надстройки - ${{ steps.assembly-version.outputs.version }}"
         files: |
           EasyEPLANner.zip
         draft: false
