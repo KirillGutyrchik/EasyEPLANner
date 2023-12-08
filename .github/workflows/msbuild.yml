@@ -209,6 +209,6 @@ jobs:
         name: ${{ github.ref_name }}
         body: "Обновление от ${{ steps.get-date.outputs.date }}. Версия надстройки - ${{ steps.assembly-version.outputs.version }}:"
         files: |
-          EasyEPLANner
+          ./*
         draft: false
         prerelease: false
