@@ -200,6 +200,9 @@ jobs:
         $version=[System.Reflection.Assembly]::LoadFrom("./EPLAN.EplAddin.EasyEPlanner.dll").GetName().Version.ToString()
         echo "version=$version" >> $env:GITHUB_OUTPUT
 
+    - name: Pack
+      run: cmake -E tar cfv EasyEPLANner.zip --format=zip ./
+
     - name: Create Release
       id: create_release
       uses: softprops/action-gh-release@v1
@@ -209,6 +212,6 @@ jobs:
         name: ${{ github.ref_name }}
         body: "Обновление от ${{ steps.get-date.outputs.date }}. Версия надстройки - ${{ steps.assembly-version.outputs.version }}:"
         files: |
-          ./*
+          EasyEPLANner.zip
         draft: false
         prerelease: false
