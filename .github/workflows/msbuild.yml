@@ -186,6 +186,17 @@ jobs:
         name: EasyEPLANner
         path: ./
 
+    - name: Unzip artifact
+      run: |
+        apt-get install unzip
+        unzip EasyEPLANner.zip
+    
+    - name: Get assembly version
+      id: assembly-version
+      run: |
+        version = monodis --assembly /Release/EPLAN.EplAddin.EasyEPlanner.dll | grep Version
+        echo "version=$version" >> $GITHUB_OUTPUT
+
     - name: Create Release
       id: create_release
       uses: softprops/action-gh-release@v1
@@ -193,6 +204,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         name: ${{ github.ref_name }}
+        body: "Обновление от $date +'%B.%m.$Y'. Версия надстройки - ${{ steps.assembly-version.outputs.version }}"
         files: |
           EasyEPLANner.zip
         draft: false
