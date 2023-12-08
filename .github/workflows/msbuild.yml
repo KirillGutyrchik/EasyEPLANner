@@ -197,7 +197,7 @@ jobs:
       id: assembly-version
       shell: powershell
       run: |
-        $version=[System.Reflection.Assembly]::LoadFrom("./EasyEPLANner/Release/EPLAN.EplAddin.EasyEPlanner.dll").GetName().Version.ToString()
+        $version=[System.Reflection.Assembly]::LoadFrom("./EPLAN.EplAddin.EasyEPlanner.dll").GetName().Version.ToString()
         echo "version=$version" >> $env:GITHUB_OUTPUT
 
     - name: Create Release
