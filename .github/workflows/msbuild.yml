@@ -189,7 +189,7 @@ jobs:
       run: Set-Timezone -Id 'Belarus Standard Time'
 
     - id: get-date
-      run: echo "date=$(date +'%B.%m.%Y')" >> $env:GITHUB_OUTPUT
+      run: echo "date=$(date +'%d.%m.%Y')" >> $env:GITHUB_OUTPUT
 
     - name: Download artifact
       uses: actions/download-artifact@v1
