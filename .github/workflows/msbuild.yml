@@ -176,7 +176,7 @@ jobs:
   release:
     if: startsWith(github.ref, 'refs/tags/')
     name: Release
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: build
 
     steps:
@@ -186,14 +186,13 @@ jobs:
         name: EasyEPLANner
         path: ./
 
-    - name: Unzip artifact
-      run: 7z x EasyEPLANner.zip
-    
     - name: Get assembly version
       id: assembly-version
+      shell: powershell
       run: |
-        version = monodis --assembly /Release/EPLAN.EplAddin.EasyEPlanner.dll | grep Version
-        echo "version=$version" >> $GITHUB_OUTPUT
+        Expand-Archive -Force 'Eplanner.zip'
+        $version=[System.Reflection.Assembly]::LoadFrom("\Eplanner\Release\EPLAN.EplAddin.EasyEPlanner.dll").GetName().Version.ToString()
+        echo "version=$version" >> $env:GITHUB_OUTPUT
 
     - name: Create Release
       id: create_release
