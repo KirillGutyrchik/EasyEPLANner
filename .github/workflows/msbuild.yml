@@ -187,9 +187,7 @@ jobs:
         path: ./
 
     - name: Unzip artifact
-      run: |
-        apt-get install unzip
-        unzip EasyEPLANner.zip
+      run: 7z x archive.zip
     
     - name: Get assembly version
       id: assembly-version
