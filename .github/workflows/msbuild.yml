@@ -190,8 +190,8 @@ jobs:
       id: assembly-version
       shell: powershell
       run: |
-        Expand-Archive -Force 'EasyEPLANner.zip'
-        $version=[System.Reflection.Assembly]::LoadFrom("\EasyEPLANner\Release\EPLAN.EplAddin.EasyEPlanner.dll").GetName().Version.ToString()
+        Expand-Archive -Force './EasyEPLANner.zip'
+        $version=[System.Reflection.Assembly]::LoadFrom("./EasyEPLANner/Release/EPLAN.EplAddin.EasyEPlanner.dll").GetName().Version.ToString()
         echo "version=$version" >> $env:GITHUB_OUTPUT
 
     - name: Create Release
