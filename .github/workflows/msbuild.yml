@@ -211,9 +211,9 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         name: ${{ github.ref_name }}
-        body: | 
-          AssemblyVersion: ${{ teps.assembly-version.outputs.version }}
-          
+        body: |
+          AssemblyVersion: ${{ steps.assembly-version.outputs.version }}
+
           ```
           Обновление от ${{ steps.get-date.outputs.date }}. Версия надстройки - ${{ steps.assembly-version.outputs.version }}:
           
