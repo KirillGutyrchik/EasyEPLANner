@@ -211,8 +211,15 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         name: ${{ github.ref_name }}
-        body: "Обновление от ${{ steps.get-date.outputs.date }}. Версия надстройки - ${{ steps.assembly-version.outputs.version }}:"
+        body: | 
+          AssemblyVersion: ${{ teps.assembly-version.outputs.version }}
+          
+          ```
+          Обновление от ${{ steps.get-date.outputs.date }}. Версия надстройки - ${{ steps.assembly-version.outputs.version }}:
+          
+          ```
         files: |
           EasyEPLANner.zip
+        generate_release_notes: true
         draft: false
         prerelease: false
