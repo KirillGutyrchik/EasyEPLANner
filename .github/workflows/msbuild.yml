@@ -173,13 +173,17 @@ jobs:
         name: EasyEPLANner
         path: src/bin/${{env.BUILD_CONFIGURATION}}
 
+    - name: Pack
+      shell: powershell
+      run: Compress-Archive -Path src/bin/${{env.BUILD_CONFIGURATION}}/* -Update -DestinationPath src/bin/${{env.BUILD_CONFIGURATION}}/EasyEPLANner.zip
+
     - name: Pull request artifacts
       uses: gavv/pull-request-artifacts@v2
       with:
         commit: ${{ github.event.pull_request.head.sha }}
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         artifacts: |
-          EasyEPLANner.zip
+          src/bin/${{env.BUILD_CONFIGURATION}}/EasyEPLANner.zip
     
   release:
     if: startsWith(github.ref, 'refs/tags/')
