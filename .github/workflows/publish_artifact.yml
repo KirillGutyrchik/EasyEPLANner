@@ -30,7 +30,7 @@ jobs:
       #  https://api.github.com/repos/KirillGutyrchik/EasyEPLANner/issues/${{ github.event.number }}/comments
       run: >
         curl 
-        -X PUT 
+        -X POST 
         -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" 
         -H "Content-Type: application/json" 
         -d '{ "body": "TEST" }' 
