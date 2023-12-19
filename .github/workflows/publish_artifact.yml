@@ -18,13 +18,20 @@ jobs:
     #    name: EasyEPLANner
     #    path: ./  
     
-    - name: Pack
-      shell: powershell
-      run: Compress-Archive -Path .\* -Update -DestinationPath EasyEPLANner.zip
+    #- name: Pack
+    #  shell: powershell
+    #  run: Compress-Archive -Path .\* -Update -DestinationPath EasyEPLANner.zip
 
     - name: Publish
-      run: > 
+      #run: > 
+      #  curl 
+      #  -H "Authorization: Bearer  ${{ secrets.GITHUB_TOKEN }}" 
+      #  -X POST -d "{ 'body': 'TEST' }" 
+      #  https://api.github.com/repos/KirillGutyrchik/EasyEPLANner/issues/${{ github.event.number }}/comments
+      run: >
         curl 
-        -H "Authorization: Bearer  ${{ secrets.GITHUB_TOKEN }}" 
-        -X POST -d "{ \"body\": \"TEST\" }" 
-        "https://api.github.com/repos/KirillGutyrchik/EasyEPLANner/issues/${{ github.event.number }}/comments"
+        -X PUT 
+        -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" 
+        -H "Content-Type: application/json" 
+        -d '{ "body": "TEST" }' 
+        https://api.github.com/repos/KirillGutyrchik/EasyEPLANner/issues/${{ github.event.number }}
