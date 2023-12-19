@@ -12,11 +12,11 @@ jobs:
     if: github.event.action == 'labeled' && github.event.label.name == 'rv'
 
     steps:
-    - name: Download artifact
-      uses: actions/download-artifact@v1
-      with:
-        name: EasyEPLANner
-        path: ./  
+    #- name: Download artifact
+    #  uses: actions/download-artifact@v1
+    #  with:
+    #    name: EasyEPLANner
+    #    path: ./  
     
     - name: Pack
       shell: powershell
