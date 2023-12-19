@@ -167,23 +167,15 @@ jobs:
         del EplanBaseNetu.dll
         del Microsoft.mshtml.dll
 
-    - name: Upload artifact    
-      uses: actions/upload-artifact@v3
+    - name: Upload artifact
+      id: artifact-upload-step    
+      uses: actions/upload-artifact@v4
       with:
         name: EasyEPLANner
         path: src/bin/${{env.BUILD_CONFIGURATION}}
 
-    - name: Pack
-      shell: powershell
-      run: Compress-Archive -Path src/bin/${{env.BUILD_CONFIGURATION}}/* -Update -DestinationPath src/bin/${{env.BUILD_CONFIGURATION}}/EasyEPLANner.zip
-
-    - name: Pull request artifacts
-      uses: gavv/pull-request-artifacts@v2
-      with:
-        commit: ${{ github.event.pull_request.head.sha }}
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        artifacts: |
-          src/bin/${{env.BUILD_CONFIGURATION}}/EasyEPLANner.zip
+    - name: Output artifact ID
+      run:  echo 'Artifact ID is ${{ steps.artifact-upload-step.outputs.artifact-id }}'
     
   release:
     if: startsWith(github.ref, 'refs/tags/')
@@ -200,7 +192,7 @@ jobs:
       run: echo "date=$(date +'%d.%m.%Y')" >> $env:GITHUB_OUTPUT
 
     - name: Download artifact
-      uses: actions/download-artifact@v1
+      uses: actions/download-artifact@v4
       with:
         name: EasyEPLANner
         path: ./
