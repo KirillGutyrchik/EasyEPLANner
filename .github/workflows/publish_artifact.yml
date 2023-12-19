@@ -1,0 +1,30 @@
+name: PublishArtifact
+
+on:
+  pull_request_target:
+    branches: [ master ]
+    types: labeled
+
+jobs:
+  publish:
+    name: publish artifact
+    runs-on: windows-latest
+    if: github.event.action == 'labeled' && github.event.label.name == 'rv'
+
+    steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v1
+      with:
+        name: EasyEPLANner
+        path: ./  
+    
+    - name: Pack
+      shell: powershell
+      run: Compress-Archive -Path .\* -Update -DestinationPath EasyEPLANner.zip
+
+    - name: Publish
+      run: > 
+        curl 
+        -H "Authorization: Bearer  ${{ secrets.GITHUB_TOKEN }}" 
+        -X POST -d "{ \"body\": \"TEST\" }" 
+        "https://api.github.com/repos/KirillGutyrchik/EasyEPLANner/issues/${{ github.event.number }}/comments"
