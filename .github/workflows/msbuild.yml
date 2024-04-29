@@ -131,7 +131,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         PULL_REQUEST_DATA: /d:sonar.pullrequest.key=${{ github.event.pull_request.number }} /d:sonar.pullrequest.branch=${{ github.event.pull_request.head.ref }} /d:sonar.scm.revision=${{ github.event.pull_request.head.sha }}
-      run: .\.sonar\scanner\dotnet-sonarscanner begin /k:"savushkin-r-d_EasyEPLANner" /o:"savushkin-r-d" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.vscoveragexml.reportsPaths="EasyEplanner.Tests/coverage.xml" ${{ github.event_name == 'pull_request_target' && env.PULL_REQUEST_DATA || '' }}
+      run: .\.sonar\scanner\dotnet-sonarscanner begin /k:"KirillGutyrchik_EasyEPLANner" /o:"KirillGutyrchik" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.vscoveragexml.reportsPaths="EasyEplanner.Tests/coverage.xml" ${{ github.event_name == 'pull_request_target' && env.PULL_REQUEST_DATA || '' }}
       
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
@@ -199,6 +199,16 @@ jobs:
       run: |
         $version=[System.Reflection.Assembly]::LoadFrom("./EPLAN.EplAddin.EasyEPlanner.dll").GetName().Version.ToString()
         echo "version=$version" >> $env:GITHUB_OUTPUT
+
+    - name: Generate ChangeLog
+      id: change-log
+      shell: powershell
+      run: |
+        $i = 1
+        foreach ($match in [Regex]::Matches($(git log $((git tag --sort=committerdate | Select-Object -Last 2) -join "..")), '```ChangeLog\n([\w\W]+)\n```')) {
+          echo "$($i). $($match.Groups[1].Value);"
+          $i = $i + 1
+        }
 
     - name: Pack
       shell: powershell
