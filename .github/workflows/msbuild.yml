@@ -211,10 +211,11 @@ jobs:
       run: |
         echo $(ls -Force)
         $i = 1
-        foreach ($match in [Regex]::Matches($(git log $((git tag --sort=committerdate | Select-Object -Last 2) -join "..")), '```ChangeLog\n([\w\W]+)\n```')) {
+        $res = foreach ($match in [Regex]::Matches($(git log $((git tag --sort=committerdate | Select-Object -Last 2) -join "..")), '```ChangeLog([\w\W]+)```')) {
           echo "$($i). $($match.Groups[1].Value);"
           $i = $i + 1
         }
+        echo $res
 
     - name: Pack
       shell: powershell
