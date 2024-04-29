@@ -211,11 +211,12 @@ jobs:
       run: |
         echo $(ls -Force)
         $i = 1
-        $res = foreach ($match in [Regex]::Matches($(git log $((git tag --sort=committerdate | Select-Object -Last 2) -join "..")), '```ChangeLog([\w\W]+)```')) {
+        $changelog = foreach ($match in [Regex]::Matches($(git log $((git tag --sort=committerdate | Select-Object -Last 2) -join "..")), '```ChangeLog([\w\W]+)```')) {
           echo "$($i). $($match.Groups[1].Value);"
           $i = $i + 1
         }
-        echo $res
+        echo $changelog
+        echo "changelog=$changelog" >> $env:GITHUB_OUTPUT
 
     - name: Pack
       shell: powershell
@@ -232,7 +233,7 @@ jobs:
           **Список изменений**:
           ```ChangeLog
           Обновление от ${{ steps.get-date.outputs.date }}. Версия надстройки - ${{ steps.assembly-version.outputs.version }}:
-          
+          ${{ steps.change-log.outputs.changelog }}
           ```
         files: |
           EasyEPLANner.zip
