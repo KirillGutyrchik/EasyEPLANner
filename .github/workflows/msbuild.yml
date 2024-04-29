@@ -204,6 +204,8 @@ jobs:
       id: change-log
       shell: powershell
       run: |
+        echo $(ls -Force)
+        git init
         $i = 1
         foreach ($match in [Regex]::Matches($(git log $((git tag --sort=committerdate | Select-Object -Last 2) -join "..")), '```ChangeLog\n([\w\W]+)\n```')) {
           echo "$($i). $($match.Groups[1].Value);"
