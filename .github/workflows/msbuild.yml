@@ -211,7 +211,7 @@ jobs:
       run: |
         echo $(ls -Force)
         $i = 1
-        $changelog = foreach ($match in [Regex]::Matches($(git log $((git tag --sort=committerdate | Select-Object -Last 2) -join "..")), '```ChangeLog([\w\W]+)```')) {
+        $changelog = foreach ($match in [Regex]::Matches($(git log $((git tag --sort=committerdate | Select-Object -Last 2) -join "..")), '```ChangeLog([\w\W]+?)```')) {
           echo "$($i). $($match.Groups[1].Value);"
           $i = $i + 1
         }
