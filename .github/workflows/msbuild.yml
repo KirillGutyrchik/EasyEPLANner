@@ -188,7 +188,7 @@ jobs:
       run: echo "date=$(date +'%d.%m.%Y')" >> $env:GITHUB_OUTPUT
 
     - name: Download artifact
-      uses: actions/download-artifact@v1
+      uses: actions/download-artifact@v4
       with:
         name: EasyEPLANner
         path: ./
