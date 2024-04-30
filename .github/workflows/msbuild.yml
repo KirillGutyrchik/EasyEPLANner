@@ -209,12 +209,12 @@ jobs:
       id: change-log
       shell: powershell
       run: |
-        echo $(ls -Force)
         $i = 1
-        $changelog = foreach ($match in [Regex]::Matches($(git log $((git tag --sort=committerdate | Select-Object -Last 2) -join "..")), '```ChangeLog[\r\n\s]+([\w\W]+?)[\r\n\s]+```')) {
-          echo "$($i). $($match.Groups[1].Value);`n"
+        foreach ($match in [Regex]::Matches($(git log $((git tag --sort=committerdate | Select-Object -Last 2) -join "..")), '```ChangeLog[\r\n\s]+([\w\W]+?)[\r\n\s]+```')) {
+          $changelog = $changelog + "$($i). $($match.Groups[1].Value);`n"
           $i = $i + 1
         }
+        $changelog = $changelog.TrimEnd('`n')
         echo "changelog=$changelog" >> $env:GITHUB_OUTPUT
 
     - name: Pack
