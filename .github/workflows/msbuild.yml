@@ -210,10 +210,11 @@ jobs:
       shell: powershell
       run: |
         $i = 1
-        $changelog foreach ($match in [Regex]::Matches($(git log $((git tag --sort=committerdate | Select-Object -Last 2) -join "..")), '```ChangeLog[\r\n\s]+([\w\W]+?)[\r\n\s]+```')) {
-          echo -n "$($i). $($match.Groups[1].Value);`n"
+        $changelog = foreach ($match in [Regex]::Matches($(git log $((git tag --sort=committerdate | Select-Object -Last 2) -join "..")), '```ChangeLog[\r\n\s]+([\w\W]+?)[\r\n\s]+```')) {
+          echo -n "$($i). $($match.Groups[1].Value);"
           $i = $i + 1
         }
+        echo $changelog
         echo "changelog=$changelog" >> $env:GITHUB_OUTPUT
 
     - name: Pack
