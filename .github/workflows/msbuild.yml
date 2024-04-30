@@ -213,7 +213,7 @@ jobs:
         $index = 1
         $logs = (git log --pretty=tformat:"%b" ((git tag --sort=committerdate | Select-Object -Last 2) -join "..")) -join "`n"
         foreach ($match in [Regex]::Matches($logs, '```ChangeLog\n?([\w\W]*?)\n?```')) {
-          echo "$index. $($match.Groups[1].Value.TrimEnd(';'))." >> $env:GITHUB_OUTPUT
+          echo "$index. $($match.Groups[1].Value.Trim().TrimEnd(';,.'))." >> $env:GITHUB_OUTPUT
           $index = $index + 1
         }
         echo ^D >> $env:GITHUB_OUTPUT
@@ -232,7 +232,7 @@ jobs:
         body: |
           **Список изменений**:
           ```ChangeLog
-          Обновление от ${{ steps.get-date.outputs.date }}. Версия надстройки - ${{ steps.assembly-version.outputs.version }}:
+          Обновление от ${{ steps.get-date.outputs.date }}. Версия надстройки - ${{ steps.assembly-version.outputs.version }}.
           ${{ steps.change-log.outputs.changelog }}
           ```
         files: |
