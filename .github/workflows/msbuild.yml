@@ -196,6 +196,7 @@ jobs:
     - name: Get assembly version
       id: assembly-version
       shell: powershell
+      working-directory: ./bin
       run: |
         $version=[System.Reflection.Assembly]::LoadFrom("./EPLAN.EplAddin.EasyEPlanner.dll").GetName().Version.ToString()
         echo "version=$version" >> $env:GITHUB_OUTPUT
