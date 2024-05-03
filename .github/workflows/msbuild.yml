@@ -240,7 +240,7 @@ jobs:
           ${{ steps.change-log.outputs.changelog }}
           ```
         files: |
-          bin\EasyEPLANner.zip
+          ./bin/EasyEPLANner.zip
         generate_release_notes: true
         draft: false
         prerelease: false
