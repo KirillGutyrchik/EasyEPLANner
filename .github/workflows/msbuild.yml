@@ -105,7 +105,16 @@ jobs:
         New-Item -Path .\.sonar\scanner -ItemType Directory
         dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
 
+    - name: Cache dotnet-coverage
+      id: cache-dotnet-coverage
+      uses: actions/cache@v4
+      with:
+        path: .\.dotnet\tools
+        key: ${{ runner.os }}-dotnet-coverage
+        restore-keys: ${{ runner.os }}-dotnet-coverage
+
     - name: Install dotnet-coverage
+      if: steps.cache-dotnet-coverage.outputs.cache-hit != 'true'
       shell: powershell
       run: |
         dotnet tool install --global dotnet-coverage
