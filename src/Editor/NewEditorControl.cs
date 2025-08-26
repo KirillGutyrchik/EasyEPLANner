@@ -104,6 +104,8 @@ namespace Editor
             // Делегат получения дочерних элементов
             editorTView.ChildrenGetter = obj => (obj as ITreeViewItem).Items;
 
+            // ТЕСТ
+
             // Настройка и добавление колонок
             var firstColumn = new OLVColumn("Название", "DisplayText[0]");
             firstColumn.IsEditable = false;
