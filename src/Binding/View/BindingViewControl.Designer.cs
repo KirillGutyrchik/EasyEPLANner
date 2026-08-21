@@ -30,6 +30,7 @@ namespace EasyEPlanner.Binding.View
             this.Expand_6 = new System.Windows.Forms.ToolStripMenuItem();
             this.syncButton = new System.Windows.Forms.ToolStripButton();
             this.groupingToggleButton = new System.Windows.Forms.ToolStripButton();
+            this.noAssignmentBtn = new System.Windows.Forms.ToolStripButton();
             this.searchBoxTLP = new System.Windows.Forms.TableLayoutPanel();
             this.searchPictureBox = new System.Windows.Forms.PictureBox();
             this.textBox_search = new System.Windows.Forms.TextBox();
@@ -87,7 +88,8 @@ namespace EasyEPlanner.Binding.View
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.Expand,
             this.syncButton,
-            this.groupingToggleButton});
+            this.groupingToggleButton,
+            this.noAssignmentBtn});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(548, 30);
@@ -107,8 +109,8 @@ namespace EasyEPlanner.Binding.View
             this.Expand.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.Expand.Name = "Expand";
             this.Expand.Size = new System.Drawing.Size(29, 27);
-            this.Expand.Text = "����������";
-            this.Expand.ToolTipText = "������� ������� ���������";
+            this.Expand.Text = "Развернуть";
+            this.Expand.ToolTipText = "Выбрать уровень развертки";
             // 
             // Expand_1
             // 
@@ -116,7 +118,7 @@ namespace EasyEPlanner.Binding.View
             this.Expand_1.Name = "Expand_1";
             this.Expand_1.Size = new System.Drawing.Size(180, 22);
             this.Expand_1.Tag = "1";
-            this.Expand_1.Text = "������� 1";
+            this.Expand_1.Text = "Уровень 1";
             this.Expand_1.Click += new System.EventHandler(this.Expand_Click);
             // 
             // Expand_2
@@ -125,7 +127,7 @@ namespace EasyEPlanner.Binding.View
             this.Expand_2.Name = "Expand_2";
             this.Expand_2.Size = new System.Drawing.Size(180, 22);
             this.Expand_2.Tag = "2";
-            this.Expand_2.Text = "������� 2";
+            this.Expand_2.Text = "Уровень 2";
             this.Expand_2.Click += new System.EventHandler(this.Expand_Click);
             // 
             // Expand_3
@@ -134,7 +136,7 @@ namespace EasyEPlanner.Binding.View
             this.Expand_3.Name = "Expand_3";
             this.Expand_3.Size = new System.Drawing.Size(180, 22);
             this.Expand_3.Tag = "3";
-            this.Expand_3.Text = "������� 3";
+            this.Expand_3.Text = "Уровень 3";
             this.Expand_3.Click += new System.EventHandler(this.Expand_Click);
             // 
             // Expand_4
@@ -143,7 +145,7 @@ namespace EasyEPlanner.Binding.View
             this.Expand_4.Name = "Expand_4";
             this.Expand_4.Size = new System.Drawing.Size(180, 22);
             this.Expand_4.Tag = "4";
-            this.Expand_4.Text = "������� 4";
+            this.Expand_4.Text = "Уровень 4";
             this.Expand_4.Click += new System.EventHandler(this.Expand_Click);
             // 
             // Expand_5
@@ -152,7 +154,7 @@ namespace EasyEPlanner.Binding.View
             this.Expand_5.Name = "Expand_5";
             this.Expand_5.Size = new System.Drawing.Size(180, 22);
             this.Expand_5.Tag = "5";
-            this.Expand_5.Text = "������� 5";
+            this.Expand_5.Text = "Уровень 5";
             this.Expand_5.Click += new System.EventHandler(this.Expand_Click);
             // 
             // Expand_6
@@ -160,7 +162,7 @@ namespace EasyEPlanner.Binding.View
             this.Expand_6.Name = "Expand_6";
             this.Expand_6.Size = new System.Drawing.Size(180, 22);
             this.Expand_6.Tag = "0";
-            this.Expand_6.Text = "�������� ��";
+            this.Expand_6.Text = "Свернуть всё";
             this.Expand_6.Click += new System.EventHandler(this.Expand_Click);
             // 
             // syncButton
@@ -170,8 +172,8 @@ namespace EasyEPlanner.Binding.View
             this.syncButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.syncButton.Name = "syncButton";
             this.syncButton.Size = new System.Drawing.Size(23, 27);
-            this.syncButton.Text = "��������";
-            this.syncButton.ToolTipText = "������������� � ����������";
+            this.syncButton.Text = "Обновить";
+            this.syncButton.ToolTipText = "Синхронизация и сохранение";
             this.syncButton.Click += new System.EventHandler(this.SyncButton_Click);
             // 
             // groupingToggleButton
@@ -183,6 +185,19 @@ namespace EasyEPlanner.Binding.View
             this.groupingToggleButton.Name = "groupingToggleButton";
             this.groupingToggleButton.Size = new System.Drawing.Size(23, 27);
             this.groupingToggleButton.Click += new System.EventHandler(this.GroupingToggleButton_Click);
+            // 
+            // noAssignmentBtn
+            // 
+            this.noAssignmentBtn.Checked = true;
+            this.noAssignmentBtn.CheckOnClick = true;
+            this.noAssignmentBtn.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.noAssignmentBtn.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.noAssignmentBtn.Image = global::EasyEPlanner.Properties.Resources.toCheck;
+            this.noAssignmentBtn.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.noAssignmentBtn.Name = "noAssignmentBtn";
+            this.noAssignmentBtn.Size = new System.Drawing.Size(23, 27);
+            this.noAssignmentBtn.ToolTipText = "Без привязки";
+            this.noAssignmentBtn.Click += new System.EventHandler(this.NoAssignmentBtn_Click);
             // 
             // searchBoxTLP
             // 
@@ -239,7 +254,7 @@ namespace EasyEPlanner.Binding.View
             this.textBox_search.ShortcutsEnabled = false;
             this.textBox_search.Size = new System.Drawing.Size(110, 13);
             this.textBox_search.TabIndex = 0;
-            this.textBox_search.Text = "�����...";
+            this.textBox_search.Text = "Поиск...";
             this.textBox_search.TextChanged += new System.EventHandler(this.TextBox_search_TextChanged);
             this.textBox_search.GotFocus += new System.EventHandler(this.TextBox_search_GotFocus);
             this.textBox_search.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TextBox_search_KeyUp);
@@ -277,7 +292,7 @@ namespace EasyEPlanner.Binding.View
             this.searchTSButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.searchTSButton.Name = "searchTSButton";
             this.searchTSButton.Size = new System.Drawing.Size(23, 27);
-            this.searchTSButton.ToolTipText = "����� (Ctrl + F)";
+            this.searchTSButton.ToolTipText = "Поиск (Ctrl + F)";
             this.searchTSButton.Click += new System.EventHandler(this.SearchTSButton_Click);
             // 
             // toolStripSeparatorSearch
@@ -327,7 +342,7 @@ namespace EasyEPlanner.Binding.View
             this.ClientSize = new System.Drawing.Size(800, 600);
             this.Controls.Add(this.MainTableLayoutPanel);
             this.Name = "BindingViewControl";
-            this.Text = "��������";
+            this.Text = "Привязка";
             this.MainTableLayoutPanel.ResumeLayout(false);
             this.toolbarPanel.ResumeLayout(false);
             this.toolbarPanel.PerformLayout();
@@ -357,6 +372,7 @@ namespace EasyEPlanner.Binding.View
         private System.Windows.Forms.ToolStripMenuItem Expand_6;
         private System.Windows.Forms.ToolStripButton syncButton;
         private System.Windows.Forms.ToolStripButton groupingToggleButton;
+        private System.Windows.Forms.ToolStripButton noAssignmentBtn;
         private System.Windows.Forms.TableLayoutPanel searchBoxTLP;
         private System.Windows.Forms.PictureBox searchPictureBox;
         private System.Windows.Forms.TextBox textBox_search;

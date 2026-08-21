@@ -50,6 +50,10 @@ namespace EasyEPlanner.Binding.ViewModel
 
         public bool GroupingToggleVisible => Mode is BindingMode.SignalBinding;
 
+        public bool HideBoundChannelsVisible => Mode is BindingMode.SignalBinding;
+
+        public bool HideBoundChannels { get; set; } = true;
+
         public BindingAttachedEditType AttachedEditType { get; private set; }
 
         public Action<string> OnSetStringValue { get; set; }
@@ -90,8 +94,15 @@ namespace EasyEPlanner.Binding.ViewModel
             SetRoots(BindingTreeBuilder.BuildSignalTree(this));
         }
 
+        public bool IsShowingEmptyEditorTree =>
+            Mode is BindingMode.ObjectBinding &&
+            ContentKind is BindingContentKind.None;
+
         public void ShowEmpty()
         {
+            if (IsShowingEmptyEditorTree)
+                return;
+
             Mode = BindingMode.ObjectBinding;
             ContentKind = BindingContentKind.None;
             SelectedItem = null;
@@ -168,16 +179,39 @@ namespace EasyEPlanner.Binding.ViewModel
             if (!CheckBoxesEnabled || item is null)
                 return;
 
-            if (state is CheckState.Indeterminate)
+            var current = item.CheckState;
+            if (current is CheckState.Unchecked &&
+                state is CheckState.Indeterminate)
+            {
+                item.SetCheckStateInternal(CheckState.Indeterminate);
+                BindingCheckHelper.UpdateParents(item);
+                return;
+            }
+
+            if (current is CheckState.Indeterminate &&
+                state is not CheckState.Unchecked)
                 state = CheckState.Checked;
+            else if (state is CheckState.Indeterminate)
+                state = CheckState.Unchecked;
 
             if (SingleSelect && state is CheckState.Checked)
                 BindingCheckHelper.UncheckAll(roots);
+
+            if (SingleSelectInGroup && state is CheckState.Checked)
+            {
+                if (item.Items.OfType<BindingFilterableViewItemBase>().Any())
+                    return;
+
+                BindingCheckHelper.UncheckSiblings(item);
+            }
 
             BindingCheckHelper.SetRecursive(item, state);
             BindingCheckHelper.UpdateParents(item);
             NotifyEditor();
         }
+
+        public bool SingleSelectInGroup =>
+            AttachedEditType is BindingAttachedEditType.AttachedAgregatesToUnit;
 
         public static BindingContentKind ResolveContentKind(ITreeViewItem item)
         {

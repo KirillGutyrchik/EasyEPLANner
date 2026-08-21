@@ -103,6 +103,12 @@ namespace EasyEPlanner
             {
                 BindChannel();
             }
+            else
+            {
+                // ResetChannel looks up devices by FUNC_TEXT and can miss;
+                // clear the channel the user actually clicked.
+                SelectedChannel?.Clear();
+            }
 
             RefreshTree();
         }

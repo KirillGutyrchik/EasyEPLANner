@@ -30,6 +30,12 @@ namespace EasyEPlanner.Binding.ViewModel
 
         bool GroupingToggleVisible { get; }
 
+        bool HideBoundChannelsVisible { get; }
+
+        bool HideBoundChannels { get; set; }
+
+        bool IsShowingEmptyEditorTree { get; }
+
         Action<string> OnSetStringValue { get; set; }
 
         Action<IDictionary<int, List<int>>> OnSetDictValue { get; set; }

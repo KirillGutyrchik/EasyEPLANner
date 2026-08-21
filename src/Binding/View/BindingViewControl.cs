@@ -25,6 +25,8 @@ namespace EasyEPlanner.Binding.View
 {
     public partial class BindingViewControl : Form
     {
+        private const string SearchPlaceholder = "Поиск...";
+        private bool isSearchPlaceholder = true;
         private string searchText = string.Empty;
         private DeviceBinder deviceBinder;
         private System.Windows.Forms.Timer textBoxSearchTypingTimer;
@@ -75,22 +77,54 @@ namespace EasyEPlanner.Binding.View
 
         public void RefreshTreeAfterBinding(bool resizeColumns = true)
         {
-            if (bindingTree.GetItemCount() == 0)
-            {
-                bindingTree.BeginUpdate();
-                bindingTree.ClearObjects();
-                bindingTree.EndUpdate();
+            if (DataContext?.Root is null)
                 return;
+
+            // TreeListView.RefreshObject rebuilds children through the current
+            // ModelFilter. After a live bind the filter cache still treats the
+            // channel as unbound, so the row neither hides nor shows the clamp.
+            // Drop the cache and re-bind roots so IncludeModel sees Channel.IsEmpty().
+            var preservedState = bindingTree.GetItemCount() > 0
+                ? SaveTreeViewState()
+                : null;
+
+            DataContext.SearchContext.FoundItems.Clear();
+            ResetFilter(DataContext.Roots.Cast<IFilterableViewItem>());
+
+            bindingTree.BeginUpdate();
+            try
+            {
+                bindingTree.UseFiltering = false;
+                bindingTree.Roots = DataContext.Roots.Cast<object>();
+                if (preservedState is not null)
+                    RestoreTreeViewState(preservedState);
+                else
+                {
+                    foreach (var root in DataContext.Roots)
+                        bindingTree.Expand(root);
+                }
             }
+            finally
+            {
+                bindingTree.EndUpdate();
+            }
+
+            var selected = bindingTree.SelectedObject;
+            UpdateModelFilter();
 
             bindingTree.BeginUpdate();
             foreach (var channel in CollectChannelItems(
                 DataContext.Roots.Cast<IExpandable>()))
             {
+                if (channel.Filtered == false)
+                    continue;
+
                 bindingTree.RefreshObject(channel);
             }
 
             bindingTree.EndUpdate();
+            RevealModel(selected);
+
             if (resizeColumns)
                 AutoResizeColumns(bindingTree);
         }
@@ -109,6 +143,9 @@ namespace EasyEPlanner.Binding.View
             if (Instance is null || Instance.IsDisposed)
                 return;
 
+            if (DataContext.IsShowingEmptyEditorTree)
+                return;
+
             DataContext.ShowEmpty();
             InitDataBindingTree();
         }
@@ -121,9 +158,18 @@ namespace EasyEPlanner.Binding.View
             if (Instance is null || Instance.IsDisposed)
                 return;
 
+            var previousRoot = DataContext.Root;
             DataContext.OnSetStringValue = setString;
             DataContext.OnSetDictValue = setDict;
             DataContext.ShowEditorBinding(item, rebuildTree);
+
+            if (ReferenceEquals(previousRoot, DataContext.Root) &&
+                DataContext.CheckBoxesEnabled)
+            {
+                bindingTree.Refresh();
+                return;
+            }
+
             InitDataBindingTree();
         }
 
@@ -226,7 +272,7 @@ namespace EasyEPlanner.Binding.View
             bindingTree.UseAlternatingBackColors = true;
             bindingTree.AlternateRowBackColor = Color.FromArgb(250, 250, 250);
             bindingTree.RowHeight = 20;
-            bindingTree.TriStateCheckBoxes = true;
+            bindingTree.TriStateCheckBoxes = false;
             bindingTree.HierarchicalCheckboxes = false;
             bindingTree.CheckStateGetter = obj =>
                 (obj as IBindingCheckable)?.CheckState ?? CheckState.Unchecked;
@@ -276,6 +322,9 @@ namespace EasyEPlanner.Binding.View
 
         private void InitSearch()
         {
+            isSearchPlaceholder = true;
+            textBox_search.Text = SearchPlaceholder;
+            textBox_search.ForeColor = Color.Gray;
             searchIterator.IndexChanged += SearchIterator_IndexChanged;
             searchIterator.SearchSettingsChanged += UpdateModelFilter;
         }
@@ -298,6 +347,8 @@ namespace EasyEPlanner.Binding.View
             bindingTree.BeginUpdate();
             bindingTree.CheckBoxes = DataContext.CheckBoxesEnabled;
             groupingToggleButton.Visible = DataContext.GroupingToggleVisible;
+            noAssignmentBtn.Visible = DataContext.HideBoundChannelsVisible;
+            noAssignmentBtn.Checked = DataContext.HideBoundChannels;
             bindingTree.Roots = DataContext.Roots.Cast<object>();
             if (bindingTree.Columns.Count > 1)
             {
@@ -411,6 +462,12 @@ namespace EasyEPlanner.Binding.View
                 ? DevicesGroupingMode.ObjectThenType
                 : DevicesGroupingMode.TypeThenObject;
             RebuildTree();
+        }
+
+        private void NoAssignmentBtn_Click(object sender, EventArgs e)
+        {
+            DataContext.HideBoundChannels = noAssignmentBtn.Checked;
+            UpdateModelFilter();
         }
 
         private void UpdateGroupingButtonText()
@@ -564,7 +621,12 @@ namespace EasyEPlanner.Binding.View
 
         private void TextBox_search_TextChanged(object sender, EventArgs e)
         {
-            if (textBox_search.Text == "Поиск..." || textBox_search.Text == string.Empty)
+            if (isSearchPlaceholder)
+                return;
+
+            textBox_search.ForeColor = SystemColors.WindowText;
+
+            if (textBox_search.Text == string.Empty)
             {
                 searchIterator.Maximum = 0;
                 searchText = string.Empty;
@@ -598,11 +660,12 @@ namespace EasyEPlanner.Binding.View
 
         private void TextBox_search_GotFocus(object sender, EventArgs e)
         {
-            if (textBox_search.Text == "Поиск...")
-            {
-                textBox_search.ForeColor = Color.Black;
-                textBox_search.Text = string.Empty;
-            }
+            if (!isSearchPlaceholder)
+                return;
+
+            isSearchPlaceholder = false;
+            textBox_search.ForeColor = SystemColors.WindowText;
+            textBox_search.Text = string.Empty;
         }
 
         private void TextBox_search_LostFocus(object sender, EventArgs e)
@@ -615,8 +678,9 @@ namespace EasyEPlanner.Binding.View
 
             if (textBox_search.Text == string.Empty && !UpdatingModelFilter)
             {
+                isSearchPlaceholder = true;
                 textBox_search.ForeColor = Color.Gray;
-                textBox_search.Text = "Поиск...";
+                textBox_search.Text = SearchPlaceholder;
                 searchBoxTLP.Visible = false;
                 searchTSButton.Visible = true;
             }
@@ -653,11 +717,20 @@ namespace EasyEPlanner.Binding.View
             ResetFilter(DataContext.Roots.Cast<IFilterableViewItem>());
 
             TextMatchFilter highlightingFilter = null;
-            if (searchText != string.Empty)
+            bool applyFilter = searchText != string.Empty ||
+                (DataContext.HideBoundChannels &&
+                 DataContext.Mode is BindingMode.SignalBinding);
+            if (applyFilter)
             {
+                foreach (var root in DataContext.Roots.OfType<IFilterableViewItem>())
+                    root.Filter(searchText, hideEmptyItems: false);
+
                 bindingTree.UseFiltering = true;
-                searchIterator.Maximum = DataContext.SearchContext.FoundItems.Count;
-                highlightingFilter = TextMatchFilter.Contains(bindingTree, searchText);
+                if (searchText != string.Empty)
+                {
+                    searchIterator.Maximum = DataContext.SearchContext.FoundItems.Count;
+                    highlightingFilter = TextMatchFilter.Contains(bindingTree, searchText);
+                }
             }
 
             bindingTree.DefaultRenderer = highlightingFilter is null
@@ -692,6 +765,19 @@ namespace EasyEPlanner.Binding.View
         {
             var item = DataContext.SearchContext.FoundItems.ElementAtOrDefault(index - 1);
             if (item is null)
+                return;
+
+            RecursiveExpandParent(item);
+            if (item is IExpandable expandable && bindingTree.CanExpand(expandable))
+                bindingTree.Expand(expandable);
+
+            bindingTree.SelectObject(item, true);
+            bindingTree.EnsureModelVisible(item);
+        }
+
+        private void RevealModel(object model)
+        {
+            if (model is not IFilterableViewItem item)
                 return;
 
             RecursiveExpandParent(item);

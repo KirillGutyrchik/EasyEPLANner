@@ -28,7 +28,8 @@ namespace EasyEPlanner.Binding.ViewModel
         public static BindingRoot BuildSignalTree(IBindingViewModel context)
         {
             var root = new BindingRoot(context, "Устройства проекта");
-            var devices = context.DeviceManager?.Devices ?? [];
+            var devices = (context.DeviceManager?.Devices ?? [])
+                .Where(HasBindableSignals);
             if (context.GroupingMode is DevicesGroupingMode.ObjectThenType)
                 BuildObjectThenType(root, context, devices, includeChannels: true);
             else
@@ -130,6 +131,9 @@ namespace EasyEPlanner.Binding.ViewModel
 
             return true;
         }
+
+        public static bool HasBindableSignals(IODevice dev) =>
+            dev?.Channels is { Count: > 0 };
 
         public static int GetObjectGroupPriority(
             BindingObjectGroupNode group,

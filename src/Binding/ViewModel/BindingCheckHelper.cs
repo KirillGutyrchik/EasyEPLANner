@@ -47,6 +47,21 @@ namespace EasyEPlanner.Binding.ViewModel
                 SetRecursive(root, CheckState.Unchecked);
         }
 
+        public static void UncheckSiblings(BindingFilterableViewItemBase item)
+        {
+            var parent = item?.ParentItem;
+            if (parent is null)
+                return;
+
+            foreach (var sibling in parent.Items.OfType<BindingFilterableViewItemBase>())
+            {
+                if (ReferenceEquals(sibling, item))
+                    continue;
+
+                SetRecursive(sibling, CheckState.Unchecked);
+            }
+        }
+
         public static IEnumerable<BindingFilterableViewItemBase> Enumerate(
             BindingFilterableViewItemBase node)
         {

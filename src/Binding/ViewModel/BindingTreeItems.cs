@@ -178,6 +178,11 @@ namespace EasyEPlanner.Binding.ViewModel
 
         public override bool CanCheck => false;
 
+        protected override bool IsHiddenByBoundFilter() =>
+            Context?.HideBoundChannels == true &&
+            Context.Mode is BindingMode.SignalBinding &&
+            !Channel.IsEmpty();
+
         [ExcludeFromCodeCoverage]
         private IEplanFunction ResolveClampEplanFunction()
         {

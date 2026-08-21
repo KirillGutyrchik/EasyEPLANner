@@ -66,10 +66,26 @@ namespace EasyEPlanner.Binding.ViewModel
             if (Filtered.HasValue)
                 return Filtered.Value;
 
+            if (IsHiddenByBoundFilter())
+            {
+                Filtered = false;
+                return false;
+            }
+
             if (string.IsNullOrEmpty(searchString))
             {
-                Filtered = true;
-                return true;
+                if (!ShouldHideEmptyBoundGroups())
+                {
+                    Filtered = true;
+                    return true;
+                }
+
+                var anyVisibleChild = false;
+                foreach (var item in items.OfType<IFilterableViewItem>())
+                    anyVisibleChild |= item.Filter(searchString, hideEmptyItems);
+
+                Filtered = items.Count == 0 || anyVisibleChild || this is BindingRoot;
+                return Filtered.Value;
             }
 
             if (Contains(searchString))
@@ -87,8 +103,18 @@ namespace EasyEPlanner.Binding.ViewModel
                 childsPassedFilter |= item.Filter(searchString, hideEmptyItems);
 
             Filtered = childsPassedFilter || ThisOrParentsContains;
+            if (ShouldHideEmptyBoundGroups() && items.Count > 0 &&
+                !childsPassedFilter && this is not BindingRoot)
+                Filtered = false;
+
             return Filtered.Value;
         }
+
+        protected virtual bool IsHiddenByBoundFilter() => false;
+
+        private bool ShouldHideEmptyBoundGroups() =>
+            Context?.HideBoundChannels == true &&
+            Context.Mode is BindingMode.SignalBinding;
 
         public void ResetFilter()
         {

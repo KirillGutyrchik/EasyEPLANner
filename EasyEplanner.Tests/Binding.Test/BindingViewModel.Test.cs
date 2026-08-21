@@ -30,6 +30,8 @@ namespace EasyEPlanner.Binding.Tests
                 Assert.AreEqual(BindingMode.SignalBinding, context.Mode);
                 Assert.AreEqual(DevicesGroupingMode.TypeThenObject, context.GroupingMode);
                 Assert.IsTrue(context.GroupingToggleVisible);
+                Assert.IsTrue(context.HideBoundChannelsVisible);
+                Assert.IsTrue(context.HideBoundChannels);
                 Assert.IsFalse(context.CheckBoxesEnabled);
                 Assert.AreEqual("Устройства проекта (0)", context.Root.Name);
             });
@@ -69,6 +71,24 @@ namespace EasyEPlanner.Binding.Tests
             Assert.AreEqual("TANK2 (1)", objectNode.Name);
             Assert.AreEqual("DO (1)", typeNode.Name);
             Assert.AreSame(device, deviceNode.Device);
+        }
+
+        [Test]
+        public void SignalTree_SkipsDevicesWithoutChannels()
+        {
+            var withSignals = CreateTankDoDevice();
+            var withoutSignals = new DO("TANK2DO2", "+TANK2-DO2", "virt", 2, "TANK", 2);
+            withoutSignals.SetSubType("DO_VIRT");
+            var context = CreateContextWithDevices(withSignals, withoutSignals);
+
+            var devices = BindingCheckHelper
+                .Enumerate((BindingFilterableViewItemBase)context.Root)
+                .OfType<BindingDeviceNode>()
+                .Select(d => d.Device)
+                .ToArray();
+
+            CollectionAssert.AreEqual(new[] { withSignals }, devices);
+            Assert.IsFalse(devices.Any(d => d.DeviceSubType == DeviceSubType.DO_VIRT));
         }
 
         [Test]
@@ -159,6 +179,144 @@ namespace EasyEPlanner.Binding.Tests
         }
 
         [Test]
+        public void Checkboxes_CanUncheckPreviouslyCheckedItem()
+        {
+            var device = CreateTankDoDevice();
+            var context = CreateContextWithDevices(device);
+            var item = MockDevListItem(new[] { DeviceType.DO }, displayParameters: false,
+                checkedValue: string.Empty);
+            context.ShowEditorBinding(item, rebuildTree: true);
+
+            var deviceNode = BindingCheckHelper
+                .Enumerate((BindingFilterableViewItemBase)context.Root)
+                .OfType<BindingDeviceNode>()
+                .Single();
+
+            context.SetItemCheckState(deviceNode, CheckState.Checked);
+            Assert.AreEqual(CheckState.Checked, deviceNode.CheckState);
+
+            context.SetItemCheckState(deviceNode, CheckState.Indeterminate);
+            Assert.AreEqual(CheckState.Unchecked, deviceNode.CheckState);
+        }
+
+        [Test]
+        public void Checkboxes_TwoDevicesInSameGroup_BothStayChecked()
+        {
+            var first = new DO("TANK2DO1", "+TANK2-DO1", "desc", 1, "TANK", 2);
+            first.SetSubType("DO");
+            var second = new DO("TANK2DO2", "+TANK2-DO2", "desc", 2, "TANK", 2);
+            second.SetSubType("DO");
+            var context = CreateContextWithDevices(first, second);
+            var item = MockDevListItem(new[] { DeviceType.DO }, displayParameters: false,
+                checkedValue: string.Empty);
+            context.ShowEditorBinding(item, rebuildTree: true);
+
+            var devices = BindingCheckHelper
+                .Enumerate((BindingFilterableViewItemBase)context.Root)
+                .OfType<BindingDeviceNode>()
+                .ToArray();
+
+            context.SetItemCheckState(devices[0], CheckState.Checked);
+            context.SetItemCheckState(devices[1], CheckState.Checked);
+
+            Assert.AreEqual(CheckState.Checked, devices[0].CheckState);
+            Assert.AreEqual(CheckState.Checked, devices[1].CheckState);
+        }
+
+        [Test]
+        public void AttachedAggregatesToUnit_AllowsOnlyOneObjectPerGroup()
+        {
+            var context = new BindingViewModel(null);
+            context.ShowEmpty();
+            SetPrivate(context, "ContentKind", BindingContentKind.AttachedObjects);
+            SetPrivate(context, "AttachedEditType",
+                BindingAttachedEditType.AttachedAgregatesToUnit);
+
+            var root = (BindingRoot)context.Root;
+            var mixers = new BindingFolderNode(context, root, "Узел перемешивания");
+            var heaters = new BindingFolderNode(context, root, "Узел нагревания");
+            var mixer1 = new BindingTechObjectNode(context, mixers, null, 1, "Mixer 1");
+            var mixer2 = new BindingTechObjectNode(context, mixers, null, 2, "Mixer 2");
+            var heater1 = new BindingTechObjectNode(context, heaters, null, 3, "Heater 1");
+            root.AddChild(mixers);
+            root.AddChild(heaters);
+            mixers.AddChild(mixer1);
+            mixers.AddChild(mixer2);
+            heaters.AddChild(heater1);
+
+            context.SetItemCheckState(mixer1, CheckState.Checked);
+            context.SetItemCheckState(heater1, CheckState.Checked);
+            context.SetItemCheckState(mixer2, CheckState.Checked);
+
+            Assert.AreEqual(CheckState.Unchecked, mixer1.CheckState);
+            Assert.AreEqual(CheckState.Checked, mixer2.CheckState);
+            Assert.AreEqual(CheckState.Checked, heater1.CheckState);
+        }
+
+        [Test]
+        public void AttachedAggregatesToUnit_DoesNotCheckWholeGroup()
+        {
+            var context = new BindingViewModel(null);
+            context.ShowEmpty();
+            SetPrivate(context, "ContentKind", BindingContentKind.AttachedObjects);
+            SetPrivate(context, "AttachedEditType",
+                BindingAttachedEditType.AttachedAgregatesToUnit);
+
+            var root = (BindingRoot)context.Root;
+            var mixers = new BindingFolderNode(context, root, "Узел перемешивания");
+            var mixer1 = new BindingTechObjectNode(context, mixers, null, 1, "Mixer 1");
+            var mixer2 = new BindingTechObjectNode(context, mixers, null, 2, "Mixer 2");
+            root.AddChild(mixers);
+            mixers.AddChild(mixer1);
+            mixers.AddChild(mixer2);
+
+            context.SetItemCheckState(mixers, CheckState.Checked);
+
+            Assert.AreEqual(CheckState.Unchecked, mixer1.CheckState);
+            Assert.AreEqual(CheckState.Unchecked, mixer2.CheckState);
+            Assert.AreEqual(CheckState.Unchecked, mixers.CheckState);
+        }
+
+        [Test]
+        public void Checkboxes_IndeterminateOnUncheckedParent_DoesNotCheckAllChildren()
+        {
+            var first = new DO("TANK2DO1", "+TANK2-DO1", "desc", 1, "TANK", 2);
+            first.SetSubType("DO");
+            var second = new DO("TANK2DO2", "+TANK2-DO2", "desc", 2, "TANK", 2);
+            second.SetSubType("DO");
+            var context = CreateContextWithDevices(first, second);
+            var item = MockDevListItem(new[] { DeviceType.DO }, displayParameters: false,
+                checkedValue: string.Empty);
+            context.ShowEditorBinding(item, rebuildTree: true);
+
+            var devices = BindingCheckHelper
+                .Enumerate((BindingFilterableViewItemBase)context.Root)
+                .OfType<BindingDeviceNode>()
+                .ToArray();
+            var typeNode = devices[0].ParentItem;
+
+            Assert.AreEqual(CheckState.Unchecked, typeNode.CheckState);
+            context.SetItemCheckState(typeNode, CheckState.Indeterminate);
+
+            Assert.AreEqual(CheckState.Indeterminate, typeNode.CheckState);
+            Assert.AreEqual(CheckState.Unchecked, devices[0].CheckState);
+            Assert.AreEqual(CheckState.Unchecked, devices[1].CheckState);
+        }
+
+        [Test]
+        public void ShowEmpty_DoesNotRebuildWhenAlreadyEmpty()
+        {
+            var context = new BindingViewModel(null);
+            context.ShowEmpty();
+            var firstRoot = context.Root;
+
+            context.ShowEmpty();
+
+            Assert.AreSame(firstRoot, context.Root);
+            Assert.IsTrue(context.IsShowingEmptyEditorTree);
+        }
+
+        [Test]
         public void ApplyCheckedValues_MarksBoundDevice()
         {
             var device = CreateTankDoDevice();
@@ -237,6 +395,117 @@ namespace EasyEPlanner.Binding.Tests
         }
 
         [Test]
+        public void HideBoundChannels_HidesBoundChannelAndParentDevice()
+        {
+            var device = CreateTankDoDevice();
+            BindFirstChannel(device);
+            var context = CreateContextWithDevices(device);
+            context.HideBoundChannels = true;
+
+            var root = (BindingRoot)context.Root;
+            root.ResetFilter();
+            Assert.IsTrue(root.Filter(string.Empty, hideEmptyItems: false));
+
+            var channelNode = BindingCheckHelper.Enumerate(root)
+                .OfType<BindingChannelItem>().Single();
+            var deviceNode = BindingCheckHelper.Enumerate(root)
+                .OfType<BindingDeviceNode>().Single();
+
+            Assert.IsFalse(channelNode.Filtered.Value);
+            Assert.IsFalse(deviceNode.Filtered.Value);
+        }
+
+        [Test]
+        public void HideBoundChannels_KeepsUnboundChannel()
+        {
+            var device = CreateTankDoDevice();
+            var context = CreateContextWithDevices(device);
+            context.HideBoundChannels = true;
+
+            var root = (BindingRoot)context.Root;
+            root.ResetFilter();
+            Assert.IsTrue(root.Filter(string.Empty, hideEmptyItems: false));
+
+            var channelNode = BindingCheckHelper.Enumerate(root)
+                .OfType<BindingChannelItem>().Single();
+            Assert.IsTrue(channelNode.Filtered.Value);
+        }
+
+        [Test]
+        public void HideBoundChannels_AfterLiveBind_HidesChannelAndShowsClamp()
+        {
+            var device = CreateTankDoDevice();
+            var context = CreateContextWithDevices(device);
+            context.HideBoundChannels = true;
+
+            var root = (BindingRoot)context.Root;
+            root.ResetFilter();
+            Assert.IsTrue(root.Filter(string.Empty, hideEmptyItems: false));
+
+            var channelNode = BindingCheckHelper.Enumerate(root)
+                .OfType<BindingChannelItem>().Single();
+            Assert.IsTrue(channelNode.Filtered.Value);
+            Assert.AreEqual(string.Empty, channelNode.Description);
+
+            BindFirstChannel(device);
+            root.ResetFilter();
+            root.Filter(string.Empty, hideEmptyItems: false);
+
+            Assert.IsFalse(channelNode.Filtered.Value);
+            Assert.AreEqual("A101:5", channelNode.Description);
+        }
+
+        [Test]
+        public void HideBoundChannels_AfterUnbind_ShowsChannelWithoutClamp()
+        {
+            var device = CreateTankDoDevice();
+            BindFirstChannel(device);
+            var context = CreateContextWithDevices(device);
+            context.HideBoundChannels = true;
+
+            var root = (BindingRoot)context.Root;
+            root.ResetFilter();
+            root.Filter(string.Empty, hideEmptyItems: false);
+
+            var channelNode = BindingCheckHelper.Enumerate(root)
+                .OfType<BindingChannelItem>().Single();
+            Assert.IsFalse(channelNode.Filtered.Value);
+
+            device.Channels[0].Clear();
+            root.ResetFilter();
+            root.Filter(string.Empty, hideEmptyItems: false);
+
+            Assert.IsTrue(channelNode.Filtered.Value);
+            Assert.AreEqual(string.Empty, channelNode.Description);
+        }
+
+        [Test]
+        public void HideBoundChannels_WhenDisabled_ShowsBoundChannel()
+        {
+            var device = CreateTankDoDevice();
+            BindFirstChannel(device);
+            var context = CreateContextWithDevices(device);
+            context.HideBoundChannels = false;
+
+            var root = (BindingRoot)context.Root;
+            root.ResetFilter();
+            var channelNode = BindingCheckHelper.Enumerate(root)
+                .OfType<BindingChannelItem>().Single();
+
+            Assert.IsTrue(channelNode.Filter(string.Empty, hideEmptyItems: false));
+        }
+
+        [Test]
+        public void HideBoundChannels_VisibleOnlyInSignalMode()
+        {
+            var context = new BindingViewModel(null);
+            Assert.IsTrue(context.HideBoundChannelsVisible);
+
+            context.ShowEmpty();
+            Assert.IsFalse(context.HideBoundChannelsVisible);
+        }
+
+        [Test]
         public void ResolveContentKind_MapsEditorItems()
         {
             Assert.AreEqual(BindingContentKind.None,
@@ -297,6 +566,11 @@ namespace EasyEPlanner.Binding.Tests
             return device;
         }
 
+        private static void BindFirstChannel(IODevice device)
+        {
+            device.Channels[0].SetChannel(0, 1, 5, 101, 0, 0);
+        }
+
         private static DO CreateOtherDoDevice()
         {
             var device = new DO("OTHER2DO1", "+OTHER2-DO1", "desc", 1, "OTHER", 2);
@@ -326,6 +600,13 @@ namespace EasyEPlanner.Binding.Tests
             var instance = typeof(DeviceManager).GetField("instance",
                 BindingFlags.NonPublic | BindingFlags.Static);
             instance.SetValue(null, null);
+        }
+
+        private static void SetPrivate(object obj, string propertyName, object value)
+        {
+            obj.GetType().GetProperty(propertyName)
+                .GetSetMethod(true)
+                .Invoke(obj, new[] { value });
         }
     }
 }
