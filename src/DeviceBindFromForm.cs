@@ -386,6 +386,7 @@ namespace EasyEPlanner
             DevicesForm?.RefreshTreeAfterBinding();
             IOViewControl.Instance?.RefreshTreeAfterBinding();
             Devices.View.DevicesViewControl.Instance?.RefreshTreeAfterBinding();
+            Binding.View.BindingViewControl.Instance?.RefreshTreeAfterBinding();
         }
 
         /// <summary>

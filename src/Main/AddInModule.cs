@@ -63,6 +63,10 @@ namespace EasyEPlanner
                 nameof(ShowDevicesNewAction), "Устройства (new)", menuID,
                 1, false, false);
 
+            menuID = oMenu.AddMenuItem("Привязка (new)",
+                nameof(ShowBindingAction), "Привязка (new)", menuID,
+                1, false, false);
+
             menuID = oMenu.AddMenuItem(
                 "Операции, ограничения и привязка объектов",
                 "ShowOperationsAction","Отображение операций", menuID, 1,
