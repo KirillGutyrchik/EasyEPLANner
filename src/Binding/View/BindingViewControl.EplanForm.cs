@@ -40,8 +40,8 @@ namespace EasyEPlanner.Binding.View
         {
             Process currentProcess = Process.GetCurrentProcess();
 
-            const int wndWmCommand = 35087;
-            const string windowName = "Кабели";
+            const int wndWmCommand = 35093;
+            const string windowName = "Штекеры";
 
             if (isLoaded)
             {

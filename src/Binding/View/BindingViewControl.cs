@@ -309,15 +309,35 @@ namespace EasyEPlanner.Binding.View
 
         private void RefreshCheckedBranch(BindingFilterableViewItemBase item)
         {
-            foreach (var node in BindingCheckHelper.Enumerate(item))
-                bindingTree.RefreshObject(node);
-
-            var parent = item.ParentItem;
-            while (parent is not null)
+            // TreeListView.RefreshObject rebuilds children via the filtered
+            // object map. Hidden rows are missing from that map, so RebuildChildren
+            // hits ArgumentOutOfRangeException. Checkbox updates only need a redraw.
+            bindingTree.BeginUpdate();
+            try
             {
-                bindingTree.RefreshObject(parent);
-                parent = parent.ParentItem;
+                foreach (var node in BindingCheckHelper.Enumerate(item))
+                    RefreshVisibleRow(node);
+
+                var parent = item.ParentItem;
+                while (parent is not null)
+                {
+                    RefreshVisibleRow(parent);
+                    parent = parent.ParentItem;
+                }
             }
+            finally
+            {
+                bindingTree.EndUpdate();
+            }
+        }
+
+        private void RefreshVisibleRow(object model)
+        {
+            var listItem = bindingTree.ModelToItem(model);
+            if (listItem is null)
+                return;
+
+            bindingTree.RefreshItem(listItem);
         }
 
         private void InitSearch()
