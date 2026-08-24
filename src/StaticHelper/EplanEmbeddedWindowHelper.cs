@@ -83,8 +83,7 @@ namespace StaticHelper
             PanelEmbedRequest request,
             Process currentProcess,
             string windowName,
-            int wndWmCommand,
-            Action afterEmbed)
+            int wndWmCommand)
         {
             var dialogHandle = request.DialogHandle;
             var visiblePtr = request.VisibleWindowPtr;
@@ -111,7 +110,6 @@ namespace StaticHelper
             request.DialogHandle = dialogHandle;
             request.VisibleWindowPtr = visiblePtr;
             request.PanelPtr = panelPtr;
-            afterEmbed();
             return true;
         }
 

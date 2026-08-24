@@ -68,11 +68,15 @@ namespace EasyEPlanner.Binding.View
             };
 
             bool embedded = EplanEmbeddedWindowHelper.TryEmbedInEplanPanel(
-                request, currentProcess, windowName, wndWmCommand, AfterEmbed);
+                request, currentProcess, windowName, wndWmCommand);
+            if (!embedded)
+                return false;
+
             dialogHandle = request.DialogHandle;
             wndBindingVisiblePtr = request.VisibleWindowPtr;
             panelPtr = request.PanelPtr;
-            return embedded;
+            AfterEmbed();
+            return true;
         }
 
         private void AfterEmbed()
