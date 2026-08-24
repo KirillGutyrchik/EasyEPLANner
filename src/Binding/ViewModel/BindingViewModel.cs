@@ -11,11 +11,12 @@ namespace EasyEPlanner.Binding.ViewModel
 {
     public class BindingViewModel : IBindingViewModel
     {
+        private const string EmptyTreeTitle = "Привязка";
+
         private readonly List<IBindingRoot> roots = [];
         private DeviceType[] lastDeviceTypes;
         private DeviceSubType[] lastDeviceSubTypes;
         private BindingContentKind lastContentKind = BindingContentKind.None;
-        private string lastCheckedObjects = string.Empty;
 
         public BindingViewModel(DeviceManager deviceManager)
         {
@@ -74,7 +75,7 @@ namespace EasyEPlanner.Binding.ViewModel
                     ApplyCheckedValues();
                     break;
                 default:
-                    SetRoots(BindingTreeBuilder.BuildEmpty(this, "Привязка"));
+                    SetEmptyRoot();
                     break;
             }
         }
@@ -90,7 +91,6 @@ namespace EasyEPlanner.Binding.ViewModel
             lastDeviceTypes = null;
             lastDeviceSubTypes = null;
             lastContentKind = BindingContentKind.None;
-            lastCheckedObjects = string.Empty;
             SetRoots(BindingTreeBuilder.BuildSignalTree(this));
         }
 
@@ -109,7 +109,7 @@ namespace EasyEPlanner.Binding.ViewModel
             SingleSelect = false;
             AttachedEditType = BindingAttachedEditType.None;
             lastContentKind = BindingContentKind.None;
-            SetRoots(BindingTreeBuilder.BuildEmpty(this, "Привязка"));
+            SetEmptyRoot();
         }
 
         public void ShowEditorBinding(ITreeViewItem item, bool rebuildTree)
@@ -137,11 +137,10 @@ namespace EasyEPlanner.Binding.ViewModel
             lastDeviceTypes = types;
             lastDeviceSubTypes = subTypes;
             lastContentKind = kind;
-            lastCheckedObjects = item?.EditText?[1] ?? string.Empty;
 
             if (kind is BindingContentKind.None)
             {
-                SetRoots(BindingTreeBuilder.BuildEmpty(this, "Привязка"));
+                SetEmptyRoot();
                 return;
             }
 
@@ -260,7 +259,7 @@ namespace EasyEPlanner.Binding.ViewModel
                         false));
                     break;
                 default:
-                    SetRoots(BindingTreeBuilder.BuildEmpty(this, "Привязка"));
+                    SetEmptyRoot();
                     break;
             }
         }
@@ -378,6 +377,9 @@ namespace EasyEPlanner.Binding.ViewModel
                     break;
             }
         }
+
+        private void SetEmptyRoot() =>
+            SetRoots(BindingTreeBuilder.BuildEmpty(this, EmptyTreeTitle));
 
         private void SetRoots(params BindingRoot[] newRoots)
         {

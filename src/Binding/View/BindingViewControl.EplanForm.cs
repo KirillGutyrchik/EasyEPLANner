@@ -1,10 +1,8 @@
 using PInvoke;
 using StaticHelper;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Drawing;
 using System.Windows.Forms;
 
 namespace EasyEPlanner.Binding.View
@@ -60,86 +58,46 @@ namespace EasyEPlanner.Binding.View
         private bool TryEmbedInEplanPanel(Process currentProcess,
             string windowName, int wndWmCommand)
         {
-            if (!GUIHelper.SearchWindowDescriptor(currentProcess, windowName,
-                wndWmCommand, ref dialogHandle, ref wndBindingVisiblePtr))
-            {
-                return false;
-            }
+            return EplanEmbeddedWindowHelper.TryEmbedInEplanPanel(
+                this, MainTableLayoutPanel, currentProcess, windowName,
+                wndWmCommand, ref dialogHandle, ref wndBindingVisiblePtr,
+                ref panelPtr, AfterEmbed);
+        }
 
-            if (wndBindingVisiblePtr == IntPtr.Zero)
-                return false;
-
-            System.Threading.Thread.Sleep(200);
-
-            GUIHelper.ShowHiddenWindow(currentProcess,
-                wndBindingVisiblePtr, wndWmCommand);
-
-            if (!GUIHelper.ChangeWindowMainPanels(ref dialogHandle, ref panelPtr))
-                return false;
-
-            Controls.Clear();
-            PI.SetParent(MainTableLayoutPanel.Handle, dialogHandle);
+        private void AfterEmbed()
+        {
             ChangeUISize();
             SetUpHook();
             isLoaded = true;
             ChangeUISize();
-            return true;
         }
 
-        private void ShowFloating()
-        {
-            if (MainTableLayoutPanel.Parent != this)
-            {
-                PI.SetParent(MainTableLayoutPanel.Handle, Handle);
-                Controls.Add(MainTableLayoutPanel);
-            }
-
-            MainTableLayoutPanel.Dock = DockStyle.Fill;
-            MainTableLayoutPanel.Show();
-            isLoaded = false;
-        }
+        private void ShowFloating() =>
+            EplanEmbeddedWindowHelper.ShowFloating(this, MainTableLayoutPanel,
+                ref isLoaded);
 
         public static void SaveCfg()
         {
             SaveCfg(PI.IsWindowVisible(wndBindingVisiblePtr) ||
-                (Instance?.Visible == true && Instance.isLoaded == false));
+                (Instance?.Visible == true && !Instance.isLoaded));
         }
 
-        public static void SaveCfg(bool wndState)
-        {
-            var path = Environment.GetFolderPath(
-                Environment.SpecialFolder.ApplicationData);
-            var ini = new IniFile(path + @"\Eplan\eplan.cfg");
-            ini.WriteString("main", CfgShowWindowKey, wndState.ToString().ToLower());
-        }
+        public static void SaveCfg(bool wndState) =>
+            EplanEmbeddedWindowHelper.SaveCfg(CfgShowWindowKey, wndState);
 
         private void InitKeyboardHook()
         {
             mainWndKeyboardCallbackDelegate ??= GlobalHookKeyboardCallbackFunction;
         }
 
-        private void InstallKeyboardHook()
-        {
-            if (globalKeyboardHookPtr != IntPtr.Zero)
-                return;
+        private void InstallKeyboardHook() =>
+            EplanEmbeddedWindowHelper.InstallKeyboardHook(
+                ref globalKeyboardHookPtr, ref mainWndKeyboardCallbackDelegate,
+                GlobalHookKeyboardCallbackFunction);
 
-            InitKeyboardHook();
-            globalKeyboardHookPtr = PI.SetWindowsHookEx(
-                PI.HookType.WH_KEYBOARD_LL, mainWndKeyboardCallbackDelegate,
-                IntPtr.Zero, 0);
-
-            if (globalKeyboardHookPtr == IntPtr.Zero)
-                MessageBox.Show("Ошибка! Не удалось переназначить клавиши!");
-        }
-
-        private void ReleaseKeyboardHook()
-        {
-            if (globalKeyboardHookPtr == IntPtr.Zero)
-                return;
-
-            PI.UnhookWindowsHookEx(globalKeyboardHookPtr);
-            globalKeyboardHookPtr = IntPtr.Zero;
-        }
+        private void ReleaseKeyboardHook() =>
+            EplanEmbeddedWindowHelper.ReleaseKeyboardHook(
+                ref globalKeyboardHookPtr);
 
         private bool ShouldKeepKeyboardHook() =>
             bindingTree?.Focused == true || textBox_search.Focused;
@@ -153,34 +111,21 @@ namespace EasyEPlanner.Binding.View
         private void SetUpHook()
         {
             dialogCallbackDelegate = DlgWndHookCallbackFunction;
-
-            uint pid = PI.GetWindowThreadProcessId(dialogHandle, IntPtr.Zero);
-            dialogHookPtr = PI.SetWindowsHookEx(PI.HookType.WH_CALLWNDPROC,
-                dialogCallbackDelegate, IntPtr.Zero, pid);
-
+            dialogHookPtr = EplanEmbeddedWindowHelper.SetDialogHook(
+                dialogHandle, dialogCallbackDelegate);
             InstallKeyboardHook();
         }
 
         private IntPtr GlobalHookKeyboardCallbackFunction(int code,
             PI.WM wParam, PI.KBDLLHOOKSTRUCT lParam)
         {
-            bool ctrl = KeyboardHookHelper.IsCtrlPressed();
-            uint vkCode = lParam.vkCode;
-
-            if (TryBlockCtrlPageNavigation(wParam, ctrl, vkCode, out var handled))
+            if (EplanEmbeddedWindowHelper.TryDispatchCommonKeyboardHook(
+                code, wParam, lParam,
+                bindingTree is not null && ShouldKeepKeyboardHook(),
+                out var vkCode, out var ctrl, out var handled))
+            {
                 return handled;
-
-            if (code < 0 || bindingTree is null || !ShouldKeepKeyboardHook())
-                return PI.CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
-
-            if (KeyboardHookHelper.ShouldBlockPlainTab(wParam, vkCode))
-                return (IntPtr)1;
-
-            if (TryBlockClipboardKeys(wParam, vkCode, ctrl, out handled))
-                return handled;
-
-            if (wParam is not PI.WM.KEYDOWN)
-                return PI.CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
+            }
 
             if (TryHandleKeyDown(vkCode, ctrl, out handled))
                 return handled;
@@ -188,146 +133,37 @@ namespace EasyEPlanner.Binding.View
             return PI.CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
         }
 
-        private static bool TryBlockCtrlPageNavigation(PI.WM wParam, bool ctrl,
-            uint vkCode, out IntPtr result)
-        {
-            if (wParam == PI.WM.KEYDOWN && ctrl &&
-                (vkCode is PI.VIRTUAL_KEY.VK_PRIOR or PI.VIRTUAL_KEY.VK_NEXT))
-            {
-                result = (IntPtr)1;
-                return true;
-            }
-
-            result = IntPtr.Zero;
-            return false;
-        }
-
-        private static bool TryBlockClipboardKeys(PI.WM wParam, uint vkCode,
-            bool ctrl, out IntPtr result)
-        {
-            if (wParam is not (PI.WM.KEYUP or PI.WM.CHAR))
-            {
-                result = IntPtr.Zero;
-                return false;
-            }
-
-            switch ((Keys)vkCode)
-            {
-                case Keys.Delete:
-                case Keys.C when ctrl:
-                case Keys.V when ctrl:
-                case Keys.X when ctrl:
-                    result = (IntPtr)1;
-                    return true;
-                default:
-                    result = IntPtr.Zero;
-                    return false;
-            }
-        }
-
         private bool TryHandleKeyDown(uint vkCode, bool ctrl, out IntPtr result)
         {
-            if (KeyCommands.ContainsKey(vkCode) && ctrl && textBox_search.Focused)
+            if (EplanEmbeddedWindowHelper.TrySendClipboardCommand(
+                vkCode, ctrl, textBox_search.Focused, out result))
             {
-                PI.SendMessage(PI.GetFocus(), KeyCommands[vkCode], 0, 0);
+                return true;
+            }
+
+            if (vkCode == (int)Keys.F && ctrl)
+            {
+                searchTSButton.PerformClick();
                 result = (IntPtr)1;
                 return true;
             }
 
-            switch (vkCode)
-            {
-                case (int)Keys.F when ctrl:
-                    searchTSButton.PerformClick();
-                    result = (IntPtr)1;
-                    return true;
-
-                case PI.VIRTUAL_KEY.VK_ESCAPE:
-                case PI.VIRTUAL_KEY.VK_RETURN:
-                case PI.VIRTUAL_KEY.VK_DELETE:
-                case PI.VIRTUAL_KEY.VK_UP:
-                case PI.VIRTUAL_KEY.VK_DOWN:
-                case PI.VIRTUAL_KEY.VK_LEFT:
-                case PI.VIRTUAL_KEY.VK_RIGHT:
-                    PI.SendMessage(PI.GetFocus(), (int)PI.WM.KEYDOWN, (int)vkCode, 0);
-                    result = (IntPtr)1;
-                    return true;
-            }
-
-            result = IntPtr.Zero;
-            return false;
+            return EplanEmbeddedWindowHelper.TryForwardTreeNavigationKeys(
+                vkCode, out result);
         }
-
-        private static readonly Dictionary<uint, uint> KeyCommands =
-            new Dictionary<uint, uint>
-            {
-                [(uint)Keys.X] = (int)PI.WM.CUT,
-                [(uint)Keys.C] = (int)PI.WM.COPY,
-                [(uint)Keys.V] = (int)PI.WM.PASTE,
-            };
 
         private IntPtr DlgWndHookCallbackFunction(int code, IntPtr wParam,
             IntPtr lParam)
         {
-            PI.CWPSTRUCT msg = (PI.CWPSTRUCT)System.Runtime.InteropServices
-                .Marshal.PtrToStructure(lParam, typeof(PI.CWPSTRUCT));
-
-            if (msg.hwnd == panelPtr)
-            {
-                switch (msg.message)
-                {
-                    case (int)PI.WM.MOVE:
-                    case (int)PI.WM.SIZE:
-                        ChangeUISize();
-                        break;
-                }
-
-                return PI.CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
-            }
-
-            if (msg.hwnd != dialogHandle)
-                return PI.CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
-
-            switch (msg.message)
-            {
-                case (int)PI.WM.GETTEXTLENGTH:
-                    return (IntPtr)newCapt.Length;
-
-                case (int)PI.WM.SETTEXT:
-                    return IntPtr.Zero;
-
-                case (int)PI.WM.DESTROY:
-                    PI.UnhookWindowsHookEx(dialogHookPtr);
-                    dialogHookPtr = IntPtr.Zero;
-                    dialogHandle = IntPtr.Zero;
-                    ReleaseKeyboardHook();
-
-                    PI.SetParent(MainTableLayoutPanel.Handle, Handle);
-                    Controls.Add(MainTableLayoutPanel);
-                    MainTableLayoutPanel.Hide();
-                    System.Threading.Thread.Sleep(1);
-                    isLoaded = false;
-                    break;
-
-                case (int)PI.WM.GETTEXT:
-                    System.Runtime.InteropServices.Marshal.Copy(
-                        newCapt, 0, lParam, newCapt.Length);
-                    return (IntPtr)newCapt.Length;
-            }
-
-            return PI.CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
+            return EplanEmbeddedWindowHelper.HandleDialogHook(
+                code, wParam, lParam, panelPtr, ref dialogHandle,
+                ref dialogHookPtr, newCapt, this, MainTableLayoutPanel,
+                ReleaseKeyboardHook, ChangeUISize, () => isLoaded = false);
         }
 
-        private void ChangeUISize()
-        {
-            IntPtr dialogPtr = PI.GetParent(MainTableLayoutPanel.Handle);
-
-            PI.GetWindowRect(dialogPtr, out PI.RECT rctDialog);
-
-            MainTableLayoutPanel.Location = new Point(0, 0);
-            MainTableLayoutPanel.Width = rctDialog.Right - rctDialog.Left;
-            MainTableLayoutPanel.Height = rctDialog.Bottom - rctDialog.Top;
-            searchBoxTLP.Invalidate();
-        }
+        private void ChangeUISize() =>
+            EplanEmbeddedWindowHelper.ChangeUISize(MainTableLayoutPanel,
+                searchBoxTLP);
 
         private void BindingTree_MouseEnter(object sender, EventArgs e)
         {

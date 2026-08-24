@@ -244,7 +244,7 @@ namespace EasyEPlanner.Binding.ViewModel
                 {
                     objectNode = new BindingObjectGroupNode(
                         context, root, objectKey, dev.ObjectName ?? string.Empty,
-                        (int)dev.ObjectNumber, GetObjectDisplay(dev));
+                        dev.ObjectNumber, GetObjectDisplay(dev));
                     objectNodes[objectKey] = objectNode;
                     typeNodesByObject[objectKey] = [];
                     root.AddChild(objectNode);
@@ -294,41 +294,54 @@ namespace EasyEPlanner.Binding.ViewModel
             {
                 if (treeItem is TechObject.TechObject techObject)
                 {
-                    bool hide = showOneNode
-                        ? techObject != mainTechObject
-                        : techObject == mainTechObject;
-                    if (hide)
-                        continue;
-
-                    int objectNumber = manager.GetTechObjectN(techObject);
-                    var node = new BindingTechObjectNode(context, parent,
-                        techObject, objectNumber, FormatTechObjectName(techObject));
-                    parent.AddChild(node);
-
-                    if (includeModes)
-                    {
-                        foreach (var mode in techObject.ModesManager.Modes)
-                        {
-                            if (restriction is not null &&
-                                IsSameRestrictionOwner(restriction, techObject, mode))
-                                continue;
-
-                            node.AddChild(new BindingModeNode(context, node, mode,
-                                objectNumber, mode.GetModeNumber()));
-                        }
-                    }
-
+                    AddTechObjectNode(context, parent, techObject, manager,
+                        mainTechObject, restriction, showOneNode, includeModes);
                     continue;
                 }
 
                 var folder = new BindingFolderNode(context, parent,
                     treeItem.DisplayText[0]);
                 parent.AddChild(folder);
-                FillTreeObjects(context, treeItem.Items ?? [], folder, mainTechObject,
-                    restriction, showOneNode, includeModes);
+                FillTreeObjects(context, treeItem.Items ?? [], folder,
+                    mainTechObject, restriction, showOneNode, includeModes);
             }
 
             RemoveEmptyFolders(parent);
+        }
+
+        private static void AddTechObjectNode(
+            IBindingViewModel context,
+            BindingFilterableViewItemBase parent,
+            TechObject.TechObject techObject,
+            TechObjectManager manager,
+            TechObject.TechObject mainTechObject,
+            Restriction restriction,
+            bool showOneNode,
+            bool includeModes)
+        {
+            bool hide = showOneNode
+                ? techObject != mainTechObject
+                : techObject == mainTechObject;
+            if (hide)
+                return;
+
+            int objectNumber = manager.GetTechObjectN(techObject);
+            var node = new BindingTechObjectNode(context, parent,
+                techObject, objectNumber, FormatTechObjectName(techObject));
+            parent.AddChild(node);
+
+            if (!includeModes)
+                return;
+
+            foreach (var mode in techObject.ModesManager.Modes)
+            {
+                if (restriction is not null &&
+                    IsSameRestrictionOwner(restriction, techObject, mode))
+                    continue;
+
+                node.AddChild(new BindingModeNode(context, node, mode,
+                    objectNumber, mode.GetModeNumber()));
+            }
         }
 
         private static void RemoveEmptyFolders(BindingFilterableViewItemBase parent)
@@ -456,7 +469,7 @@ namespace EasyEPlanner.Binding.ViewModel
 
             var objectNode = new BindingObjectGroupNode(
                 typeNode.Context, typeNode, objectKey, dev.ObjectName,
-                (int)dev.ObjectNumber, GetObjectDisplay(dev));
+                dev.ObjectNumber, GetObjectDisplay(dev));
             typeNode.AddChild(objectNode);
             return objectNode;
         }

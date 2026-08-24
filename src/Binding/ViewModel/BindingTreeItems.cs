@@ -21,6 +21,8 @@ namespace EasyEPlanner.Binding.ViewModel
         public void SetName(string name) => Name = name;
 
         public override DevicesIcon Icon => DevicesIcon.Root;
+
+        protected override bool StayVisibleWhenNoMatchingChildren => true;
     }
 
     public sealed class BindingTypeGroupNode : BindingFilterableViewItemBase, IBoldName

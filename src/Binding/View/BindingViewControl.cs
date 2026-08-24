@@ -89,7 +89,8 @@ namespace EasyEPlanner.Binding.View
                 : null;
 
             DataContext.SearchContext.FoundItems.Clear();
-            ResetFilter(DataContext.Roots.Cast<IFilterableViewItem>());
+            ObjectListViewTreeHelper.ResetFilter(
+                DataContext.Roots.Cast<IFilterableViewItem>());
 
             bindingTree.BeginUpdate();
             try
@@ -362,7 +363,8 @@ namespace EasyEPlanner.Binding.View
             bindingTree.ContextMenuStrip = menu;
         }
 
-        private void InitDataBindingTree(BindingTreeViewState preservedState = null)
+        private void InitDataBindingTree(
+            ObjectListViewTreeHelper.TreeListViewSnapshot preservedState = null)
         {
             bindingTree.BeginUpdate();
             bindingTree.CheckBoxes = DataContext.CheckBoxesEnabled;
@@ -628,10 +630,7 @@ namespace EasyEPlanner.Binding.View
 
         private void SearchBoxTLP_Paint(object sender, PaintEventArgs e)
         {
-            var rect = e.ClipRectangle;
-            rect.Inflate(-1, -1);
-            e.Graphics.Clear(Color.White);
-            e.Graphics.DrawRectangle(new Pen(new SolidBrush(Color.Black)), rect);
+            ObjectListViewTreeHelper.PaintSearchBoxBorder(e);
         }
 
         private void SearchBoxTLP_MouseClick(object sender, MouseEventArgs e)
@@ -708,21 +707,7 @@ namespace EasyEPlanner.Binding.View
 
         private void TextBox_search_KeyUp(object sender, KeyEventArgs e)
         {
-            switch (e.KeyData)
-            {
-                case Keys.V | Keys.Control:
-                    (sender as TextBox).Paste();
-                    break;
-                case Keys.C | Keys.Control:
-                    (sender as TextBox).Copy();
-                    break;
-                case Keys.X | Keys.Control:
-                    (sender as TextBox).Cut();
-                    break;
-                case Keys.Escape:
-                    bindingTree.Focus();
-                    break;
-            }
+            ObjectListViewTreeHelper.HandleSearchKeyUp(sender, e, bindingTree);
         }
 
         private bool UpdatingModelFilter { get; set; }
@@ -734,9 +719,9 @@ namespace EasyEPlanner.Binding.View
 
             bindingTree.UseFiltering = false;
             DataContext.SearchContext.FoundItems.Clear();
-            ResetFilter(DataContext.Roots.Cast<IFilterableViewItem>());
+            ObjectListViewTreeHelper.ResetFilter(
+                DataContext.Roots.Cast<IFilterableViewItem>());
 
-            TextMatchFilter highlightingFilter = null;
             bool applyFilter = searchText != string.Empty ||
                 (DataContext.HideBoundChannels &&
                  DataContext.Mode is BindingMode.SignalBinding);
@@ -747,38 +732,15 @@ namespace EasyEPlanner.Binding.View
 
                 bindingTree.UseFiltering = true;
                 if (searchText != string.Empty)
-                {
                     searchIterator.Maximum = DataContext.SearchContext.FoundItems.Count;
-                    highlightingFilter = TextMatchFilter.Contains(bindingTree, searchText);
-                }
             }
 
-            bindingTree.DefaultRenderer = highlightingFilter is null
-                ? null
-                : new HighlightTextRenderer(highlightingFilter)
-                {
-                    FillBrush = new SolidBrush(Color.LightGreen),
-                    FramePen = new Pen(Color.DarkGreen),
-                };
-
-            bindingTree.TreeColumnRenderer.Filter = highlightingFilter;
-            bindingTree.TreeColumnRenderer.FillBrush = new SolidBrush(Color.LightGreen);
-            bindingTree.TreeColumnRenderer.FramePen = new Pen(Color.DarkGreen);
+            ObjectListViewTreeHelper.ApplySearchHighlight(bindingTree, searchText);
 
             if (searchBoxWasFocused)
                 textBox_search.Focus();
 
             UpdatingModelFilter = false;
-        }
-
-        private static void ResetFilter(IEnumerable<IFilterableViewItem> items)
-        {
-            foreach (var item in items)
-            {
-                item.ResetFilter();
-                if (item is IExpandable expandable && expandable.Items is not null)
-                    ResetFilter(expandable.Items.OfType<IFilterableViewItem>());
-            }
         }
 
         private void SearchIterator_IndexChanged(object sender, int index)

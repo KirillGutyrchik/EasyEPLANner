@@ -84,7 +84,8 @@ namespace EasyEPlanner.Binding.ViewModel
                 foreach (var item in items.OfType<IFilterableViewItem>())
                     anyVisibleChild |= item.Filter(searchString, hideEmptyItems);
 
-                Filtered = items.Count == 0 || anyVisibleChild || this is BindingRoot;
+                Filtered = items.Count == 0 || anyVisibleChild ||
+                    StayVisibleWhenNoMatchingChildren;
                 return Filtered.Value;
             }
 
@@ -104,11 +105,13 @@ namespace EasyEPlanner.Binding.ViewModel
 
             Filtered = childsPassedFilter || ThisOrParentsContains;
             if (ShouldHideEmptyBoundGroups() && items.Count > 0 &&
-                !childsPassedFilter && this is not BindingRoot)
+                !childsPassedFilter && !StayVisibleWhenNoMatchingChildren)
                 Filtered = false;
 
             return Filtered.Value;
         }
+
+        protected virtual bool StayVisibleWhenNoMatchingChildren => false;
 
         protected virtual bool IsHiddenByBoundFilter() => false;
 
