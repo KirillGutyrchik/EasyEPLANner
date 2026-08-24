@@ -58,10 +58,21 @@ namespace EasyEPlanner.Binding.View
         private bool TryEmbedInEplanPanel(Process currentProcess,
             string windowName, int wndWmCommand)
         {
-            return EplanEmbeddedWindowHelper.TryEmbedInEplanPanel(
-                this, MainTableLayoutPanel, currentProcess, windowName,
-                wndWmCommand, ref dialogHandle, ref wndBindingVisiblePtr,
-                ref panelPtr, AfterEmbed);
+            var request = new EplanEmbeddedWindowHelper.PanelEmbedRequest
+            {
+                Form = this,
+                MainPanel = MainTableLayoutPanel,
+                DialogHandle = dialogHandle,
+                VisibleWindowPtr = wndBindingVisiblePtr,
+                PanelPtr = panelPtr,
+            };
+
+            bool embedded = EplanEmbeddedWindowHelper.TryEmbedInEplanPanel(
+                request, currentProcess, windowName, wndWmCommand, AfterEmbed);
+            dialogHandle = request.DialogHandle;
+            wndBindingVisiblePtr = request.VisibleWindowPtr;
+            panelPtr = request.PanelPtr;
+            return embedded;
         }
 
         private void AfterEmbed()
@@ -155,10 +166,24 @@ namespace EasyEPlanner.Binding.View
         private IntPtr DlgWndHookCallbackFunction(int code, IntPtr wParam,
             IntPtr lParam)
         {
-            return EplanEmbeddedWindowHelper.HandleDialogHook(
-                code, wParam, lParam, panelPtr, ref dialogHandle,
-                ref dialogHookPtr, newCapt, this, MainTableLayoutPanel,
-                ReleaseKeyboardHook, ChangeUISize, () => isLoaded = false);
+            var context = new EplanEmbeddedWindowHelper.DialogHookContext
+            {
+                PanelPtr = panelPtr,
+                DialogHandle = dialogHandle,
+                DialogHookPtr = dialogHookPtr,
+                CaptionBytes = newCapt,
+                Form = this,
+                MainPanel = MainTableLayoutPanel,
+                ReleaseKeyboardHook = ReleaseKeyboardHook,
+                OnSizeChanged = ChangeUISize,
+                OnDestroyed = () => isLoaded = false,
+            };
+
+            var result = EplanEmbeddedWindowHelper.HandleDialogHook(
+                code, wParam, lParam, context);
+            dialogHandle = context.DialogHandle;
+            dialogHookPtr = context.DialogHookPtr;
+            return result;
         }
 
         private void ChangeUISize() =>

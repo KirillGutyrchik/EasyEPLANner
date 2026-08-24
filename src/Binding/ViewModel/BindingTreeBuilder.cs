@@ -96,8 +96,14 @@ namespace EasyEPlanner.Binding.ViewModel
             if (techManager?.Items is null)
                 return root;
 
-            FillTreeObjects(context, techManager.Items, root, mainTechObject,
-                restriction, showOneNode, includeModes: true);
+            FillTreeObjects(techManager.Items, root, new FillTreeArgs
+            {
+                Context = context,
+                MainTechObject = mainTechObject,
+                Restriction = restriction,
+                ShowOneNode = showOneNode,
+                IncludeModes = true,
+            });
             return root;
         }
 
@@ -112,8 +118,13 @@ namespace EasyEPlanner.Binding.ViewModel
             if (techManager?.Items is null)
                 return root;
 
-            FillTreeObjects(context, techManager.Items, root, mainTechObject,
-                null, showOneNode, includeModes: false);
+            FillTreeObjects(techManager.Items, root, new FillTreeArgs
+            {
+                Context = context,
+                MainTechObject = mainTechObject,
+                ShowOneNode = showOneNode,
+                IncludeModes = false,
+            });
             return root;
         }
 
@@ -277,14 +288,23 @@ namespace EasyEPlanner.Binding.ViewModel
             root.SetName($"Устройства проекта ({total})");
         }
 
+        private sealed class FillTreeArgs
+        {
+            public IBindingViewModel Context { get; set; }
+
+            public TechObject.TechObject MainTechObject { get; set; }
+
+            public Restriction Restriction { get; set; }
+
+            public bool ShowOneNode { get; set; }
+
+            public bool IncludeModes { get; set; }
+        }
+
         private static void FillTreeObjects(
-            IBindingViewModel context,
             ITreeViewItem[] treeItems,
             BindingFilterableViewItemBase parent,
-            TechObject.TechObject mainTechObject,
-            Restriction restriction,
-            bool showOneNode,
-            bool includeModes)
+            FillTreeArgs args)
         {
             if (treeItems is null)
                 return;
@@ -294,52 +314,46 @@ namespace EasyEPlanner.Binding.ViewModel
             {
                 if (treeItem is TechObject.TechObject techObject)
                 {
-                    AddTechObjectNode(context, parent, techObject, manager,
-                        mainTechObject, restriction, showOneNode, includeModes);
+                    AddTechObjectNode(parent, techObject, manager, args);
                     continue;
                 }
 
-                var folder = new BindingFolderNode(context, parent,
+                var folder = new BindingFolderNode(args.Context, parent,
                     treeItem.DisplayText[0]);
                 parent.AddChild(folder);
-                FillTreeObjects(context, treeItem.Items ?? [], folder,
-                    mainTechObject, restriction, showOneNode, includeModes);
+                FillTreeObjects(treeItem.Items ?? [], folder, args);
             }
 
             RemoveEmptyFolders(parent);
         }
 
         private static void AddTechObjectNode(
-            IBindingViewModel context,
             BindingFilterableViewItemBase parent,
             TechObject.TechObject techObject,
             TechObjectManager manager,
-            TechObject.TechObject mainTechObject,
-            Restriction restriction,
-            bool showOneNode,
-            bool includeModes)
+            FillTreeArgs args)
         {
-            bool hide = showOneNode
-                ? techObject != mainTechObject
-                : techObject == mainTechObject;
+            bool hide = args.ShowOneNode
+                ? techObject != args.MainTechObject
+                : techObject == args.MainTechObject;
             if (hide)
                 return;
 
             int objectNumber = manager.GetTechObjectN(techObject);
-            var node = new BindingTechObjectNode(context, parent,
+            var node = new BindingTechObjectNode(args.Context, parent,
                 techObject, objectNumber, FormatTechObjectName(techObject));
             parent.AddChild(node);
 
-            if (!includeModes)
+            if (!args.IncludeModes)
                 return;
 
             foreach (var mode in techObject.ModesManager.Modes)
             {
-                if (restriction is not null &&
-                    IsSameRestrictionOwner(restriction, techObject, mode))
+                if (args.Restriction is not null &&
+                    IsSameRestrictionOwner(args.Restriction, techObject, mode))
                     continue;
 
-                node.AddChild(new BindingModeNode(context, node, mode,
+                node.AddChild(new BindingModeNode(args.Context, node, mode,
                     objectNumber, mode.GetModeNumber()));
             }
         }

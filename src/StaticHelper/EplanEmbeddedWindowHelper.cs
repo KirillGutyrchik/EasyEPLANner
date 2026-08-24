@@ -15,13 +15,47 @@ namespace StaticHelper
     [ExcludeFromCodeCoverage]
     public static class EplanEmbeddedWindowHelper
     {
-        public static readonly Dictionary<uint, uint> ClipboardKeyCommands =
+        private static readonly Dictionary<uint, uint> ClipboardKeyCommands =
             new Dictionary<uint, uint>
             {
                 [(uint)Keys.X] = (int)PI.WM.CUT,
                 [(uint)Keys.C] = (int)PI.WM.COPY,
                 [(uint)Keys.V] = (int)PI.WM.PASTE,
             };
+
+        public sealed class PanelEmbedRequest
+        {
+            public Form Form { get; set; }
+
+            public Control MainPanel { get; set; }
+
+            public IntPtr DialogHandle { get; set; }
+
+            public IntPtr VisibleWindowPtr { get; set; }
+
+            public IntPtr PanelPtr { get; set; }
+        }
+
+        public sealed class DialogHookContext
+        {
+            public IntPtr PanelPtr { get; set; }
+
+            public IntPtr DialogHandle { get; set; }
+
+            public IntPtr DialogHookPtr { get; set; }
+
+            public byte[] CaptionBytes { get; set; }
+
+            public Form Form { get; set; }
+
+            public Control MainPanel { get; set; }
+
+            public Action ReleaseKeyboardHook { get; set; }
+
+            public Action OnSizeChanged { get; set; }
+
+            public Action OnDestroyed { get; set; }
+        }
 
         public static void SaveCfg(string cfgKey, bool wndState)
         {
@@ -46,35 +80,37 @@ namespace StaticHelper
         }
 
         public static bool TryEmbedInEplanPanel(
-            Form form,
-            Control mainPanel,
+            PanelEmbedRequest request,
             Process currentProcess,
             string windowName,
             int wndWmCommand,
-            ref IntPtr dialogHandle,
-            ref IntPtr wndVisiblePtr,
-            ref IntPtr panelPtr,
             Action afterEmbed)
         {
+            var dialogHandle = request.DialogHandle;
+            var visiblePtr = request.VisibleWindowPtr;
+            var panelPtr = request.PanelPtr;
+
             if (!GUIHelper.SearchWindowDescriptor(currentProcess, windowName,
-                wndWmCommand, ref dialogHandle, ref wndVisiblePtr))
+                wndWmCommand, ref dialogHandle, ref visiblePtr))
             {
                 return false;
             }
 
-            if (wndVisiblePtr == IntPtr.Zero)
+            if (visiblePtr == IntPtr.Zero)
                 return false;
 
             System.Threading.Thread.Sleep(200);
 
-            GUIHelper.ShowHiddenWindow(currentProcess,
-                wndVisiblePtr, wndWmCommand);
+            GUIHelper.ShowHiddenWindow(currentProcess, visiblePtr, wndWmCommand);
 
             if (!GUIHelper.ChangeWindowMainPanels(ref dialogHandle, ref panelPtr))
                 return false;
 
-            form.Controls.Clear();
-            PI.SetParent(mainPanel.Handle, dialogHandle);
+            request.Form.Controls.Clear();
+            PI.SetParent(request.MainPanel.Handle, dialogHandle);
+            request.DialogHandle = dialogHandle;
+            request.VisibleWindowPtr = visiblePtr;
+            request.PanelPtr = panelPtr;
             afterEmbed();
             return true;
         }
@@ -238,62 +274,52 @@ namespace StaticHelper
         }
 
         public static IntPtr HandleDialogHook(
-            int code,
-            IntPtr wParam,
-            IntPtr lParam,
-            IntPtr panelPtr,
-            ref IntPtr dialogHandle,
-            ref IntPtr dialogHookPtr,
-            byte[] captionBytes,
-            Form form,
-            Control mainPanel,
-            Action releaseKeyboardHook,
-            Action onSizeChanged,
-            Action onDestroyed)
+            int code, IntPtr wParam, IntPtr lParam, DialogHookContext context)
         {
             var msg = (PI.CWPSTRUCT)Marshal.PtrToStructure(lParam,
                 typeof(PI.CWPSTRUCT));
 
-            if (msg.hwnd == panelPtr)
+            if (msg.hwnd == context.PanelPtr)
             {
                 switch (msg.message)
                 {
                     case (int)PI.WM.MOVE:
                     case (int)PI.WM.SIZE:
-                        onSizeChanged();
+                        context.OnSizeChanged();
                         break;
                 }
 
                 return PI.CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
             }
 
-            if (msg.hwnd != dialogHandle)
+            if (msg.hwnd != context.DialogHandle)
                 return PI.CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
 
             switch (msg.message)
             {
                 case (int)PI.WM.GETTEXTLENGTH:
-                    return (IntPtr)captionBytes.Length;
+                    return (IntPtr)context.CaptionBytes.Length;
 
                 case (int)PI.WM.SETTEXT:
                     return IntPtr.Zero;
 
                 case (int)PI.WM.DESTROY:
-                    PI.UnhookWindowsHookEx(dialogHookPtr);
-                    dialogHookPtr = IntPtr.Zero;
-                    dialogHandle = IntPtr.Zero;
-                    releaseKeyboardHook();
+                    PI.UnhookWindowsHookEx(context.DialogHookPtr);
+                    context.DialogHookPtr = IntPtr.Zero;
+                    context.DialogHandle = IntPtr.Zero;
+                    context.ReleaseKeyboardHook();
 
-                    PI.SetParent(mainPanel.Handle, form.Handle);
-                    form.Controls.Add(mainPanel);
-                    mainPanel.Hide();
+                    PI.SetParent(context.MainPanel.Handle, context.Form.Handle);
+                    context.Form.Controls.Add(context.MainPanel);
+                    context.MainPanel.Hide();
                     System.Threading.Thread.Sleep(1);
-                    onDestroyed();
+                    context.OnDestroyed();
                     break;
 
                 case (int)PI.WM.GETTEXT:
-                    Marshal.Copy(captionBytes, 0, lParam, captionBytes.Length);
-                    return (IntPtr)captionBytes.Length;
+                    Marshal.Copy(context.CaptionBytes, 0, lParam,
+                        context.CaptionBytes.Length);
+                    return (IntPtr)context.CaptionBytes.Length;
             }
 
             return PI.CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
