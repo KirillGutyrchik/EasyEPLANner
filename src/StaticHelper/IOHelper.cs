@@ -49,9 +49,9 @@ namespace StaticHelper
         /// Кэш функции модуля I/O для пневмоострова: полный обход PLCBox
         /// в EPLAN на больших проектах занимает секунды и вызывается
         /// несколько раз за одну привязку.
+        /// Создаётся лениво, чтобы конструктор не тянул типы EPLAN в тестах.
         /// </summary>
-        private readonly Dictionary<string, Function> valveTerminalIoModuleCache =
-            new Dictionary<string, Function>();
+        private Dictionary<string, Function> valveTerminalIoModuleCache;
 
         public Function GetClampFunction(StorableObject selectedObject)
         {
@@ -163,6 +163,7 @@ namespace StaticHelper
             if (fromModel != null)
                 return fromModel;
 
+            valveTerminalIoModuleCache ??= new Dictionary<string, Function>();
             if (valveTerminalIoModuleCache.TryGetValue(valveTerminalName,
                 out var cached))
             {
