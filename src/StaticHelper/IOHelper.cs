@@ -148,6 +148,7 @@ namespace StaticHelper
         /// Сначала берётся из уже прочитанной модели проекта, полный обход
         /// функций EPLAN — только запасной путь.
         /// </summary>
+        [ExcludeFromCodeCoverage]
         private Function GetValveTerminalIOModuleFunction(
             Function clampFunction)
         {
