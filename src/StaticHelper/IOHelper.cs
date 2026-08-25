@@ -4,6 +4,7 @@ using EplanDevice;
 using IO;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
@@ -161,8 +162,15 @@ namespace StaticHelper
             var fromModel = TryGetValveTerminalIOModuleFromModel(
                 clampFunction.Name);
             if (fromModel != null)
-                return fromModel;
+                return ToEplanFunction(fromModel);
 
+            return GetValveTerminalIOModuleFromCacheOrScan(valveTerminalName);
+        }
+
+        [ExcludeFromCodeCoverage]
+        private Function GetValveTerminalIOModuleFromCacheOrScan(
+            string valveTerminalName)
+        {
             valveTerminalIoModuleCache ??= new Dictionary<string, Function>();
             if (valveTerminalIoModuleCache.TryGetValue(valveTerminalName,
                 out var cached))
@@ -177,7 +185,10 @@ namespace StaticHelper
             return found ?? new Function();
         }
 
-        private static Function TryGetValveTerminalIOModuleFromModel(
+        private static Function ToEplanFunction(IEplanFunction function)
+            => (function as EplanFunction)?.Function;
+
+        private static IEplanFunction TryGetValveTerminalIOModuleFromModel(
             string clampName)
         {
             var deviceName = clampName.Contains(":")
@@ -203,7 +214,7 @@ namespace StaticHelper
             {
                 var module = IOManager.GetInstance()
                     .GetModuleByPhysicalNumber(channel.FullModule);
-                return (module?.Function as EplanFunction)?.Function;
+                return module?.Function;
             }
             catch
             {
@@ -211,6 +222,7 @@ namespace StaticHelper
             }
         }
 
+        [ExcludeFromCodeCoverage]
         private Function FindValveTerminalIOModuleByEplanScan(
             string valveTerminalName)
         {
