@@ -3,6 +3,7 @@ using Eplan.EplApi.DataModel;
 using Eplan.EplApi.HEServices;
 using EasyEPlanner;
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace StaticHelper
 {
@@ -25,6 +26,7 @@ namespace StaticHelper
             this.apiHelper = apiHelper;
         }
 
+        [ExcludeFromCodeCoverage]
         public Project GetProject()
         {
             Project managedProject = EProjectManager.GetInstance()
@@ -38,6 +40,7 @@ namespace StaticHelper
             return project;
         }
 
+        [ExcludeFromCodeCoverage]
         public string GetProjectProperty(string propertyName)
         {
             var project = GetProject();

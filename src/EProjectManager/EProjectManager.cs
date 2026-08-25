@@ -176,6 +176,7 @@ namespace EasyEPlanner
             currentProject = project;
         }
 
+        [ExcludeFromCodeCoverage]
         public void SyncAndSave(bool saveDescrSilentMode = true)
         {
             if (currentProject == null || !ProjectDataIsLoaded)
@@ -223,6 +224,7 @@ namespace EasyEPlanner
         /// <summary>
         /// Активный в EPLAN проект совпадает с проектом дополнения.
         /// </summary>
+        [ExcludeFromCodeCoverage]
         public bool IsManagedProjectActive()
         {
             if (currentProject == null)

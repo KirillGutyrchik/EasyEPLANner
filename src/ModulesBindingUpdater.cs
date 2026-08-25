@@ -4,6 +4,7 @@ using Eplan.EplApi.HEServices;
 using StaticHelper;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -28,6 +29,7 @@ namespace EasyEPlanner
         /// </summary>
         /// <returns>Возвращает сообщения об ошибках во время выполнения.
         /// </returns>
+        [ExcludeFromCodeCoverage]
         public string Execute()
         {
             ProjectConfiguration.GetInstance().ReadIO();
