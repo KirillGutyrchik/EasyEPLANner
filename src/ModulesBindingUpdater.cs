@@ -44,8 +44,10 @@ namespace EasyEPlanner
             ProjectConfiguration.GetInstance().Check();
             IO.IOManager.GetInstance().CalculateIOLinkAdresses();
 
-            var selection = new SelectionSet();
-            Project project = selection.GetCurrentProject(true);
+            Project project = EProjectManager.GetInstance().GetCurrentPrj();
+            if (project == null)
+                return errorMessage;
+
             var objectFinder = new DMObjectsFinder(project);
 
             var functionsFilter = new FunctionsFilter();

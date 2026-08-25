@@ -1,6 +1,7 @@
 ﻿using Eplan.EplApi.Base;
 using Eplan.EplApi.DataModel;
 using Eplan.EplApi.HEServices;
+using EasyEPlanner;
 using System;
 
 namespace StaticHelper
@@ -26,6 +27,11 @@ namespace StaticHelper
 
         public Project GetProject()
         {
+            Project managedProject = EProjectManager.GetInstance()
+                .GetCurrentPrj();
+            if (managedProject != null)
+                return managedProject;
+
             SelectionSet selection = apiHelper.GetSelectionSet();
             const bool useDialog = false;
             Project project = selection.GetCurrentProject(useDialog);

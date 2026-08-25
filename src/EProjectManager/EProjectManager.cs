@@ -1,8 +1,10 @@
 ﻿using System;
 using Eplan.EplApi.DataModel;
 using Eplan.EplApi.ApplicationFramework;
+using Eplan.EplApi.HEServices;
 using System.Text.RegularExpressions;
 using System.Diagnostics.CodeAnalysis;
+using System.Windows.Forms;
 using IO.View;
 
 namespace EasyEPlanner
@@ -176,29 +178,63 @@ namespace EasyEPlanner
 
         public void SyncAndSave(bool saveDescrSilentMode = true)
         {
-            if (currentProject != null && ProjectDataIsLoaded)
+            if (currentProject == null || !ProjectDataIsLoaded)
+                return;
+
+            if (!IsManagedProjectActive())
             {
-                String strAction = "LoadDescriptionAction";
-                ActionManager oAMnr = new ActionManager();
-                Eplan.EplApi.ApplicationFramework.Action oAction =
-                    oAMnr.FindAction(strAction);
-                ActionCallingContext ctx = new ActionCallingContext();
-
-                if (oAction != null)
+                if (!saveDescrSilentMode)
                 {
-                    ctx.AddParameter("loadFromLua", "no");
-                    oAction.Execute(ctx);
+                    MessageBox.Show(
+                        "Синхронизация и сохранение доступны только для " +
+                        $"проекта «{GetCurrentProjectName()}», с которым " +
+                        "работает дополнение. Переключитесь на этот проект " +
+                        "в EPLAN или закройте остальные открытые проекты.",
+                        "EPlaner",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
                 }
 
-                strAction = "SaveDescriptionAction";
-                oAction = oAMnr.FindAction(strAction);
-                if (oAction != null)
-                {
-                    ctx.AddParameter("silentMode",
-                        saveDescrSilentMode ? "yes" : "no");
-                    oAction.Execute(ctx);
-                }
+                return;
             }
+
+            String strAction = "LoadDescriptionAction";
+            ActionManager oAMnr = new ActionManager();
+            Eplan.EplApi.ApplicationFramework.Action oAction =
+                oAMnr.FindAction(strAction);
+            ActionCallingContext ctx = new ActionCallingContext();
+
+            if (oAction != null)
+            {
+                ctx.AddParameter("loadFromLua", "no");
+                oAction.Execute(ctx);
+            }
+
+            strAction = "SaveDescriptionAction";
+            oAction = oAMnr.FindAction(strAction);
+            if (oAction != null)
+            {
+                ctx.AddParameter("silentMode",
+                    saveDescrSilentMode ? "yes" : "no");
+                oAction.Execute(ctx);
+            }
+        }
+
+        /// <summary>
+        /// Активный в EPLAN проект совпадает с проектом дополнения.
+        /// </summary>
+        public bool IsManagedProjectActive()
+        {
+            if (currentProject == null)
+                return false;
+
+            var selectionSet = new SelectionSet();
+            selectionSet.LockSelectionByDefault = false;
+            selectionSet.LockProjectByDefault = false;
+            Project activeProject = selectionSet.GetCurrentProject(false);
+
+            return activeProject != null &&
+                activeProject.ProjectName == currentProject.ProjectName;
         }
 
         /// <summary>
