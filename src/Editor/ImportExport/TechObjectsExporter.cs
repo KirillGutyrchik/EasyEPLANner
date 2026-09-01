@@ -90,13 +90,15 @@ namespace Editor
                     TechObject.TechObject exportingObject = obj.Clone(
                         techObjectManager.GetTechObjectN, globalNum, globalNum);
 
-                    // Убираем привязку при экспорте.
+                    exportingObject.AttachedObjectsRefs =
+                        AttachedObjectReferences.FromIndices(techObjectManager,
+                            obj.AttachedObjects.Value);
                     exportingObject.AttachedObjects.SetValue("");
 
                     // Обходим нулевое значение т.к объект ни находится ни в
                     // каком списке объектов.
                     string description = exportingObject
-                        .SaveAsLuaTable("\t\t", globalNum);
+                        .SaveAsLuaTable("\t\t", globalNum, true);
                     description = description
                         .Replace("[ 0 ]", $"[ {globalNum} ]");
                     objectsDescription.Append(description);

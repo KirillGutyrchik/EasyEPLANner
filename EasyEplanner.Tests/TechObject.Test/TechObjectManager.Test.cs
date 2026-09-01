@@ -227,19 +227,19 @@ namespace TechObjectTests
 
             Assert.Multiple(() =>
             {
-                var techObject = techObjectManager.AddObject(4, 2, "Танк", 2, "TANK", -1, "TANK2", "TANK", "", 1, false);
+                var techObject = techObjectManager.AddObject(4, 2, "Танк", 2, "TANK", -1, "TANK2", "TANK", "", "", 1, false);
                 Assert.AreSame(techObjectManager.GetTObject(4), techObject);
 
-                var genericTechObject = techObjectManager.AddObject(4, 2, "Танк", 2, "TANK", -1, "TANK", "TANK", "", 1, true);
+                var genericTechObject = techObjectManager.AddObject(4, 2, "Танк", 2, "TANK", -1, "TANK", "TANK", "", "", 1, true);
                 Assert.AreSame(techObjectManager.GetGenericTObject(4), genericTechObject);
 
-                techObject = techObjectManager.AddObject(5, 3, "Танк", 3, "tank_", -1, "tank_3", "tank_", "", 0, false);
+                techObject = techObjectManager.AddObject(5, 3, "Танк", 3, "tank_", -1, "tank_3", "tank_", "", "", 0, false);
                 Assert.AreSame(techObjectManager.GetTObject(5), techObject);
 
-                techObject = techObjectManager.AddObject(6, 3, "Пользовательский объект", 2, "USER", -1, "", "USER", "", -1, false);
+                techObject = techObjectManager.AddObject(6, 3, "Пользовательский объект", 2, "USER", -1, "", "USER", "", "", -1, false);
                 Assert.AreSame(techObjectManager.GetTObject(6), techObject);
 
-                genericTechObject = techObjectManager.AddObject(7, 3, "Пользовательский объект", 2, "USER", -1, "", "USER", "", 2, true);
+                genericTechObject = techObjectManager.AddObject(7, 3, "Пользовательский объект", 2, "USER", -1, "", "USER", "", "", 2, true);
                 Assert.AreSame(techObjectManager.GetGenericTObject(5), genericTechObject);
             });
         }
