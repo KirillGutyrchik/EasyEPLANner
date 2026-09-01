@@ -2,10 +2,10 @@ using System.Collections.Generic;
 
 namespace TechObject
 {
-        /// <summary>
-        /// Переносимые ссылки на привязанные агрегаты: base_tech_object
-        /// и технологический номер вместо глобальных индексов.
-        /// </summary>
+    /// <summary>
+    /// Переносимые ссылки на привязанные агрегаты: base_tech_object
+    /// и технологический номер вместо глобальных индексов.
+    /// </summary>
     public static class AttachedObjectReferences
     {
         public const string LuaFieldName = "attached_objects_refs";
@@ -34,8 +34,7 @@ namespace TechObject
 
         public static string FormatReference(TechObject techObject)
         {
-            return $"{techObject.BaseTechObject.EplanName}:" +
-                $"{techObject.TechNumber}";
+            return $"{techObject.BaseTechObject.EplanName}:{techObject.TechNumber}";
         }
 
         public static List<int> ToIndices(ITechObjectManager manager,
@@ -47,30 +46,9 @@ namespace TechObject
 
             foreach (string part in refsValue.Split(' '))
             {
-                if (string.IsNullOrWhiteSpace(part))
+                if (!TryParseReference(part, out string baseObjectName,
+                        out int techNumber))
                     continue;
-
-                string[] segments = part.Split(':');
-                int techNumber;
-                string baseObjectName;
-
-                if (segments.Length == 2)
-                {
-                    baseObjectName = segments[0];
-                    if (!int.TryParse(segments[1], out techNumber))
-                        continue;
-                }
-                else if (segments.Length == 3)
-                {
-                    // Старый формат base:tech_type:n — tech_type игнорируется.
-                    baseObjectName = segments[0];
-                    if (!int.TryParse(segments[2], out techNumber))
-                        continue;
-                }
-                else
-                {
-                    continue;
-                }
 
                 int index = manager.GetTechObjectN(baseObjectName, techNumber);
                 if (index > 0)
@@ -78,6 +56,50 @@ namespace TechObject
             }
 
             return indices;
+        }
+
+        /// <summary>
+        /// Восстановить привязанные агрегаты объекта по переносимым ссылкам.
+        /// </summary>
+        public static void ApplyTo(ITechObjectManager manager,
+            TechObject techObject)
+        {
+            if (string.IsNullOrWhiteSpace(techObject.AttachedObjectsRefs))
+                return;
+
+            List<int> indices = ToIndices(manager,
+                techObject.AttachedObjectsRefs);
+            if (indices.Count == 0)
+                return;
+
+            techObject.AttachedObjects.SetNewValue(string.Join(" ", indices));
+            techObject.AttachedObjectsRefs = string.Empty;
+        }
+
+        private static bool TryParseReference(string part,
+            out string baseObjectName, out int techNumber)
+        {
+            baseObjectName = string.Empty;
+            techNumber = 0;
+
+            if (string.IsNullOrWhiteSpace(part))
+                return false;
+
+            string[] segments = part.Split(':');
+            switch (segments.Length)
+            {
+                case 2 when int.TryParse(segments[1], out techNumber):
+                    baseObjectName = segments[0];
+                    break;
+                case 3 when int.TryParse(segments[2], out techNumber):
+                    // Старый формат base:tech_type:n — tech_type игнорируется.
+                    baseObjectName = segments[0];
+                    break;
+                default:
+                    return false;
+            }
+
+            return !string.IsNullOrEmpty(baseObjectName);
         }
     }
 }

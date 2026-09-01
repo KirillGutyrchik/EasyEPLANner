@@ -115,7 +115,7 @@ namespace TechObject
         /// <param name="globalNum">Глобальный номер объекта</param>
         /// <returns>Описание в виде таблицы Lua.</returns>
         public string SaveAsLuaTable(string prefix, int globalNum,
-            bool includeAttachedObjectsRefs = false)
+            string exportAttachedObjectsRefs = null)
         {
             string baseObjectName = "";
             if (baseTechObject != null)
@@ -127,10 +127,9 @@ namespace TechObject
                 $"{prefix}base_tech_object = '{baseObjectName}',\n";
             string attached_objects_str = (string.IsNullOrEmpty(AttachedObjects.Value)) ? string.Empty :
                 $"{prefix}{AttachedObjects.WorkStrategy.LuaName} = '{AttachedObjects.Value}',\n";
-            string attached_objects_refs_str = includeAttachedObjectsRefs &&
-                !string.IsNullOrEmpty(AttachedObjectsRefs) ?
-                $"{prefix}{AttachedObjectReferences.LuaFieldName} = '{AttachedObjectsRefs}',\n" :
-                string.Empty;
+            string attached_objects_refs_str = string.IsNullOrEmpty(exportAttachedObjectsRefs) ?
+                string.Empty :
+                $"{prefix}{AttachedObjectReferences.LuaFieldName} = '{exportAttachedObjectsRefs}',\n";
 
             StringBuilder resultBuilder = new StringBuilder();
             resultBuilder.Append($"\t[ {globalNum} ] =\n")

@@ -64,6 +64,20 @@ namespace TechObjectTests
             CollectionAssert.AreEqual(new[] { 8 }, indices);
         }
 
+        [Test]
+        public void ApplyTo_SkipsWhenRefsAreEmpty()
+        {
+            var manager = new Mock<ITechObjectManager>();
+            var owner = new TechObject.TechObject("Tank", _ => 1, 1, 2,
+                "TANK", -1, "TANK", "3", null);
+
+            AttachedObjectReferences.ApplyTo(manager.Object, owner);
+
+            Assert.AreEqual("3", owner.AttachedObjects.Value);
+            manager.Verify(m => m.GetTechObjectN(It.IsAny<string>(), It.IsAny<int>()),
+                Times.Never);
+        }
+
         private static ITechObjectManager CreateManager(
             TechObject.TechObject techObject, int globalIndex)
         {

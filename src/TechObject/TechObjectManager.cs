@@ -385,21 +385,8 @@ namespace TechObject
         public void ApplyAttachedObjectsReferences(
             IEnumerable<TechObject> objects = null)
         {
-            IEnumerable<TechObject> targetObjects = objects ?? TechObjects;
-            foreach (TechObject techObject in targetObjects)
-            {
-                if (string.IsNullOrWhiteSpace(techObject.AttachedObjectsRefs))
-                    continue;
-
-                List<int> indices = AttachedObjectReferences.ToIndices(this,
-                    techObject.AttachedObjectsRefs);
-                if (indices.Count == 0)
-                    continue;
-
-                techObject.AttachedObjects.SetNewValue(
-                    string.Join(" ", indices));
-                techObject.AttachedObjectsRefs = string.Empty;
-            }
+            foreach (TechObject techObject in objects ?? TechObjects)
+                AttachedObjectReferences.ApplyTo(this, techObject);
         }
 
         /// <summary>
