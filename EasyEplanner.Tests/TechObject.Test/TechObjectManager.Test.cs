@@ -118,6 +118,50 @@ namespace TechObjectTests
         }
 
         [Test]
+        public void GetTechObjectN_By_BaseObjectName_And_TechNumber()
+        {
+            Assert.Multiple(() =>
+            {
+                var techObjectN = techObjectManager.GetTechObjectN("TANK", 1);
+                Assert.AreEqual(1, techObjectN);
+
+                techObjectN = techObjectManager.GetTechObjectN("TANK", 0);
+                Assert.AreEqual(0, techObjectN);
+
+                techObjectN = techObjectManager.GetTechObjectN("UNKNOWN", 1);
+                Assert.AreEqual(0, techObjectN);
+            });
+        }
+
+        [Test]
+        public void ApplyAttachedObjectsReferences_RestoresBindingsByReference()
+        {
+            var aggregateBase = new BaseTechObject
+            {
+                EplanName = "PUMP",
+                S88Level = (int)BaseTechObjectManager.ObjectType.Aggregate,
+            };
+            var pump = new TechObject.TechObject("Pump", GetN => 4, 1, 1,
+                "PUMP", -1, "P1", "", aggregateBase);
+            techObjects.Add(pump);
+
+            var unitBase = new BaseTechObject
+            {
+                EplanName = "TANK",
+                S88Level = (int)BaseTechObjectManager.ObjectType.Unit,
+            };
+            var unit = new TechObject.TechObject("Unit", GetN => 5, 1, 2,
+                "UNIT", -1, "U1", "", unitBase);
+            techObjects.Add(unit);
+            unit.AttachedObjectsRefs = "PUMP:1";
+
+            techObjectManager.ApplyAttachedObjectsReferences(new[] { unit });
+
+            Assert.AreEqual("4", unit.AttachedObjects.Value);
+            Assert.AreEqual(string.Empty, unit.AttachedObjectsRefs);
+        }
+
+        [Test]
         public void GetTechObjectN_By_BaseObjectName_TechType_TechNumber()
         {
             Assert.Multiple(() =>

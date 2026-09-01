@@ -65,6 +65,33 @@ namespace TechObjectTests
         }
 
         [Test]
+        public void FromIndices_SkipsInvalidAndUnresolvedIndices()
+        {
+            var manager = new Mock<ITechObjectManager>();
+            manager.Setup(m => m.GetTObject(2)).Returns((TechObject.TechObject)null);
+            manager.Setup(m => m.GetTObject(3)).Returns(
+                new TechObject.TechObject("NoBase", _ => 1, 1, 1, "X", -1, "X",
+                    "", null));
+
+            string refs = AttachedObjectReferences.FromIndices(manager.Object,
+                "abc 2 3");
+
+            Assert.AreEqual(string.Empty, refs);
+        }
+
+        [Test]
+        public void ToIndices_SkipsInvalidAndUnresolvedReferences()
+        {
+            var manager = new Mock<ITechObjectManager>();
+            manager.Setup(m => m.GetTechObjectN("PUMP", 1)).Returns(0);
+
+            List<int> indices = AttachedObjectReferences.ToIndices(manager.Object,
+                "invalid :1 PUMP:1");
+
+            Assert.IsEmpty(indices);
+        }
+
+        [Test]
         public void ApplyTo_SkipsWhenRefsAreEmpty()
         {
             var manager = new Mock<ITechObjectManager>();
