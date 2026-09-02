@@ -92,6 +92,42 @@ namespace TechObjectTests
         }
 
         [Test]
+        public void ToIndices_PrefersObjectsFromImportBatch()
+        {
+            var mixBase = new BaseTechObject { EplanName = "MIX_NODE" };
+            var existingNode = new TechObject.TechObject("Old", _ => 2, 3, 1,
+                "MIX1", -1, "M1", "", mixBase);
+            var importedNode = new TechObject.TechObject("New", _ => 5, 3, 1,
+                "MIX2", -1, "M2", "", mixBase);
+
+            var manager = new Mock<ITechObjectManager>();
+            manager.Setup(m => m.GetTechObjectN(existingNode)).Returns(2);
+            manager.Setup(m => m.GetTechObjectN(importedNode)).Returns(5);
+            manager.Setup(m => m.GetTechObjectN("MIX_NODE", 3)).Returns(2);
+
+            List<int> indices = AttachedObjectReferences.ToIndices(
+                manager.Object, "MIX_NODE:3", new[] { importedNode });
+
+            CollectionAssert.AreEqual(new[] { 5 }, indices);
+        }
+
+        [Test]
+        public void ToIndices_FallsBackToProjectWhenRefNotInImportBatch()
+        {
+            var mixBase = new BaseTechObject { EplanName = "MIX_NODE" };
+            var importedTank = new TechObject.TechObject("Tank", _ => 4, 3, 2,
+                "TANK", -1, "T1", "", new BaseTechObject { EplanName = "TANK" });
+
+            var manager = new Mock<ITechObjectManager>();
+            manager.Setup(m => m.GetTechObjectN("MIX_NODE", 3)).Returns(2);
+
+            List<int> indices = AttachedObjectReferences.ToIndices(
+                manager.Object, "MIX_NODE:3", new[] { importedTank });
+
+            CollectionAssert.AreEqual(new[] { 2 }, indices);
+        }
+
+        [Test]
         public void ApplyTo_SkipsWhenRefsAreEmpty()
         {
             var manager = new Mock<ITechObjectManager>();

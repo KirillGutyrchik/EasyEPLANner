@@ -162,6 +162,38 @@ namespace TechObjectTests
         }
 
         [Test]
+        public void ApplyAttachedObjectsReferences_PrefersImportedObjectWithSameNumber()
+        {
+            var mixBase = new BaseTechObject
+            {
+                EplanName = "MIX_NODE",
+                S88Level = (int)BaseTechObjectManager.ObjectType.Aggregate,
+            };
+            var existingNode = new TechObject.TechObject("Old node", GetN => 1, 3, 1,
+                "MIX1", -1, "M1", "", mixBase);
+            techObjects.Add(existingNode);
+
+            var importedNode = new TechObject.TechObject("New node", GetN => 5, 3, 1,
+                "MIX2", -1, "M2", "", mixBase);
+            techObjects.Add(importedNode);
+
+            var unitBase = new BaseTechObject
+            {
+                EplanName = "TANK",
+                S88Level = (int)BaseTechObjectManager.ObjectType.Unit,
+            };
+            var importedUnit = new TechObject.TechObject("New tank", GetN => 6, 3, 2,
+                "TANK", -1, "T3", "", unitBase);
+            techObjects.Add(importedUnit);
+            importedUnit.AttachedObjectsRefs = "MIX_NODE:3";
+
+            techObjectManager.ApplyAttachedObjectsReferences(
+                new[] { importedUnit, importedNode });
+
+            Assert.AreEqual("5", importedUnit.AttachedObjects.Value);
+        }
+
+        [Test]
         public void GetTechObjectN_By_BaseObjectName_TechType_TechNumber()
         {
             Assert.Multiple(() =>

@@ -38,7 +38,7 @@ namespace TechObject
         }
 
         public static List<int> ToIndices(ITechObjectManager manager,
-            string refsValue)
+            string refsValue, IEnumerable<TechObject> preferredObjects = null)
         {
             var indices = new List<int>();
             if (string.IsNullOrWhiteSpace(refsValue))
@@ -50,7 +50,8 @@ namespace TechObject
                         out int techNumber))
                     continue;
 
-                int index = manager.GetTechObjectN(baseObjectName, techNumber);
+                int index = ResolveIndex(manager, baseObjectName, techNumber,
+                    preferredObjects);
                 if (index > 0)
                     indices.Add(index);
             }
@@ -61,19 +62,49 @@ namespace TechObject
         /// <summary>
         /// Восстановить привязанные агрегаты объекта по переносимым ссылкам.
         /// </summary>
+        /// <param name="preferredObjects">Импортированные объекты, которым
+        /// отдаётся приоритет при разрешении ссылок</param>
         public static void ApplyTo(ITechObjectManager manager,
-            TechObject techObject)
+            TechObject techObject, IEnumerable<TechObject> preferredObjects = null)
         {
             if (string.IsNullOrWhiteSpace(techObject.AttachedObjectsRefs))
                 return;
 
             List<int> indices = ToIndices(manager,
-                techObject.AttachedObjectsRefs);
+                techObject.AttachedObjectsRefs, preferredObjects);
             if (indices.Count == 0)
                 return;
 
             techObject.AttachedObjects.SetNewValue(string.Join(" ", indices));
             techObject.AttachedObjectsRefs = string.Empty;
+        }
+
+        private static int ResolveIndex(ITechObjectManager manager,
+            string baseObjectName, int techNumber,
+            IEnumerable<TechObject> preferredObjects)
+        {
+            if (preferredObjects != null)
+            {
+                foreach (TechObject techObject in preferredObjects)
+                {
+                    if (!MatchesReference(techObject, baseObjectName, techNumber))
+                        continue;
+
+                    int index = manager.GetTechObjectN(techObject);
+                    if (index > 0)
+                        return index;
+                }
+            }
+
+            return manager.GetTechObjectN(baseObjectName, techNumber);
+        }
+
+        private static bool MatchesReference(TechObject techObject,
+            string baseObjectName, int techNumber)
+        {
+            return techObject?.BaseTechObject != null &&
+                techObject.BaseTechObject.EplanName.Equals(baseObjectName) &&
+                techObject.TechNumber == techNumber;
         }
 
         private static bool TryParseReference(string part,

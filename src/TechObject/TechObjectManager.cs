@@ -385,8 +385,9 @@ namespace TechObject
         public void ApplyAttachedObjectsReferences(
             IEnumerable<TechObject> objects = null)
         {
-            foreach (TechObject techObject in objects ?? TechObjects)
-                AttachedObjectReferences.ApplyTo(this, techObject);
+            IEnumerable<TechObject> targetObjects = objects ?? TechObjects;
+            foreach (TechObject techObject in targetObjects)
+                AttachedObjectReferences.ApplyTo(this, techObject, objects);
         }
 
         /// <summary>
