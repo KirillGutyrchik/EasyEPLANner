@@ -227,6 +227,7 @@ namespace EasyEPlanner
             Editor.NewEditorControl.SaveCfg();
             IOViewControl.SaveCfg();
             EasyEPlanner.Devices.View.DevicesViewControl.SaveCfg();
+            EasyEPlanner.Binding.View.BindingViewControl.SaveCfg();
 
             if (Editor.Editor.GetInstance().IsShown())
             {
@@ -235,6 +236,7 @@ namespace EasyEPlanner
 
             ModeFrm.GetInstance().CloseEditor();
             DFrm.GetInstance().CloseEditor();
+            EasyEPlanner.Binding.View.BindingViewControl.Instance?.CloseEditor();
         }
 
         /// <summary>

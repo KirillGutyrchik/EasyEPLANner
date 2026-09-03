@@ -16,6 +16,7 @@ using System.Threading;
 using StaticHelper;
 using TechObject;
 using IO.View;
+using EasyEPlanner.Binding.View;
 
 namespace Editor
 {
@@ -1209,6 +1210,8 @@ namespace Editor
                        TechObject.TechObjectManager.GetInstance(),
                        false, false, null, null, null, true);
                 }
+
+                UpdateBindingWindow(null, true);
             }
             else
             {
@@ -1264,6 +1267,8 @@ namespace Editor
                         ModeFrm.GetInstance().ShowNoModes();
                     }
                 }
+
+                UpdateBindingWindow(GetActiveItem(), true);
             }
         }
 
@@ -1296,6 +1301,30 @@ namespace Editor
             return needItem;
         }
 
+        private void UpdateBindingWindow(ITreeViewItem item, bool rebuildTree)
+        {
+            var binding = BindingViewControl.Instance;
+            if (binding is null || !binding.IsVisible())
+                return;
+
+            if (!edit_toolStripButton.Checked)
+            {
+                binding.ShowSignalBinding();
+                return;
+            }
+
+            if (item is null ||
+                (!item.IsUseDevList &&
+                 item is not Restriction &&
+                 item is not AttachedObjects))
+            {
+                binding.ShowEmpty();
+                return;
+            }
+
+            binding.ShowEditorBinding(item, SetNewVal, SetNewVal, rebuildTree);
+        }
+
         /// <summary>
         /// Обновление дерева
         /// </summary>
@@ -1307,6 +1336,7 @@ namespace Editor
             DFrm.GetInstance().RefreshTree();
             IOViewControl.Instance?.RebuildTree();
             EasyEPlanner.Devices.View.DevicesViewControl.Instance?.RebuildTree();
+            BindingViewControl.Instance?.RebuildTree();
 
             editorTView.RefreshObjects(treeViewItemsList);
         }
@@ -1660,6 +1690,9 @@ namespace Editor
                     item, SetNewVal, true);
                 ModeFrm.GetInstance().SelectDevices(item, SetNewVal);
             }
+
+            if (edit_toolStripButton.Checked)
+                UpdateBindingWindow(item, item is not IAction);
 
             editorTView.EndUpdate();
             editorTView.Focus();
