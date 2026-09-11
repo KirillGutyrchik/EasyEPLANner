@@ -137,6 +137,7 @@ namespace EplanDevice
                     if (comment != string.Empty)
                     {
                         res += prefix + "-- " + comment + "\n";
+                        res += prefix + $"comment       = \'{comment}\',\n";
                     }
 
                     res += prefix + $"node          = {node},\n";
