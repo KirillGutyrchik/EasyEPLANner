@@ -82,7 +82,10 @@ namespace TechObject
 
         public override ITreeViewItem InsertCopy(object obj)
         {
-            if (baseObject?.BaseTechObject?.IsSingleInstance == true &&
+            if (baseObject == null)
+                return null;
+
+            if (baseObject.BaseTechObject?.IsSingleInstance == true &&
                 baseObject.Count > 0)
             {
                 var cutting = (obj as TechObject)?.MarkToCut == true;
@@ -91,7 +94,7 @@ namespace TechObject
             }
 
             var techObject = obj as TechObject;
-            
+
             if (techObject is null)
                 return null;
 
