@@ -153,7 +153,8 @@ devices =
         public void LoadFromLua_LoadsParametersPropertiesAndChannelBinding()
         {
             // V_DO1_DI1_FB_OFF (subtype 3): параметры P_ON_TIME, P_FB
-            // V_DO2 (subtype 2): два DO — привязка по comment после SortChannels
+            // V_DO2 (subtype 2): два DO — привязка по порядку каналов
+            // после SortChannels ("Открыть", затем "Закрыть")
             // M_ATV (subtype 9): свойство IP
             const string lua = @"
 nodes =
@@ -188,7 +189,6 @@ devices =
         DO =
         {
             {
-                comment = 'Открыть',
                 node = 0,
                 offset = 0,
                 physical_port = 1,
@@ -196,7 +196,6 @@ devices =
                 module_offset = 0,
             },
             {
-                comment = 'Закрыть',
                 node = 0,
                 offset = 1,
                 physical_port = 2,
@@ -228,6 +227,9 @@ devices =
             Assert.AreEqual(1.0, valveFb.Parameters[IODevice.Parameter.P_FB]);
 
             var valveDo2 = DeviceManager.GetInstance().GetDevice("TANK1V2");
+            // Каналы сопоставляются по позиции: после SortChannels() DO
+            // упорядочены как ["Открыть", "Закрыть"], поэтому первая запись
+            // DO в файле соответствует "Открыть", вторая — "Закрыть".
             var openCh = valveDo2.Channels.First(c => c.Comment == "Открыть");
             var closeCh = valveDo2.Channels.First(c => c.Comment == "Закрыть");
             Assert.IsFalse(openCh.IsEmpty());

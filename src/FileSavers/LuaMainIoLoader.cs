@@ -675,21 +675,13 @@ namespace EasyEPlanner
                 if (channels[key] is not LuaTable ch)
                     continue;
 
-                string comment = Convert.ToString(ch["comment"] ?? "");
-                IODevice.IOChannel targetChannel = null;
-                if (!string.IsNullOrEmpty(comment))
-                {
-                    targetChannel = deviceChannels
-                        .FirstOrDefault(c => c.Comment == comment);
-                }
-
-                if (targetChannel == null)
-                {
-                    if (channelOrdinal >= deviceChannels.Count)
-                        break;
-                    targetChannel = deviceChannels[channelOrdinal];
-                    channelOrdinal++;
-                }
+                // Каналы сохраняются строго в порядке их описания у
+                // устройства (включая непривязанные — "заглушки"), поэтому
+                // сопоставление идёт по позиции, без комментария.
+                if (channelOrdinal >= deviceChannels.Count)
+                    break;
+                IODevice.IOChannel targetChannel = deviceChannels[channelOrdinal];
+                channelOrdinal++;
 
                 int node = ToInt(ch["node"], -1);
                 int physicalPort = ToInt(ch["physical_port"], -1);

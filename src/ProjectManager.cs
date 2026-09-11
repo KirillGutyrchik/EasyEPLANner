@@ -457,10 +457,54 @@ namespace EasyEPlanner
                 return;
             }
 
-            ProjectDescriptionSaver.SaveTechObjectsAndRestrictions(
-                context.ProjectName, context.ProjectFolderPath, silentMode);
-            ProjectDescriptionSaver.SaveMainIoFile(
-                context.ProjectName, context.ProjectFolderPath, silentMode);
+            bool showLog = !silentMode && !Logs.IsNull();
+            if (showLog)
+            {
+                Logs.Show();
+                Logs.DisableButtons();
+                Logs.SetProgress(0);
+            }
+
+            bool hasError = false;
+            try
+            {
+                ProjectDescriptionSaver.SaveTechObjectsAndRestrictions(
+                    context.ProjectName, context.ProjectFolderPath, silentMode);
+                ProjectDescriptionSaver.SaveMainIoFile(
+                    context.ProjectName, context.ProjectFolderPath, silentMode);
+            }
+            catch (Exception ex)
+            {
+                hasError = true;
+                if (showLog)
+                {
+                    Logs.AddMessage("Ошибка сохранения - " + ex);
+                    Logs.ShowLastLine();
+                }
+                else
+                {
+                    MessageBox.Show("Ошибка сохранения:\n" + ex.Message,
+                        "Сохранение", MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
+            }
+            finally
+            {
+                if (showLog)
+                {
+                    Logs.EnableButtons();
+                    Logs.SetProgress(100);
+                }
+            }
+
+            // Сообщение об успехе — только если в текущем сохранении
+            // не было ошибок (иначе лог вводил бы в заблуждение).
+            if (showLog && !hasError)
+            {
+                Logs.AddMessage($"Проект \"{context.ProjectName}\" " +
+                    "сохранен.");
+                Logs.ShowLastLine();
+            }
         }
 
         /// <summary>
