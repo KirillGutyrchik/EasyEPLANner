@@ -41,9 +41,9 @@ jobs:
         $response = (curl -L
         -w '%{http_code}'
         -H "Accept: application/vnd.github+json"
-        -H "Authorization: Bearer ${{ secrets.EPLAN_API_BIN }}"
+        -H "Authorization: Bearer ${{ secrets.EASYEPLANNER_TOKEN }}"
         -H "X-GitHub-Api-Version: 2022-11-28"
-        https://api.github.com/orgs/savushkin-r-d/members/${{ github.triggering_actor }})
+        https://api.github.com/orgs/sav-oss-org/members/${{ github.triggering_actor }})
         
         echo "response=$response" >> $env:GITHUB_OUTPUT
       continue-on-error: true
@@ -128,7 +128,7 @@ jobs:
       run: |
         curl -L "https://github.com/gruntwork-io/fetch/releases/download/v0.4.2/fetch_windows_amd64.exe" -O
         md src/bin/${{env.BUILD_CONFIGURATION}}
-        ./fetch_windows_amd64.exe --github-oauth-token="${{ secrets.EPLAN_API_BIN }}" --repo="https://github.com/savushkin-r-d/EPLAN-API-bin" --tag="2.9" --release-asset=".*" "src/bin/${{env.BUILD_CONFIGURATION}}"
+        ./fetch_windows_amd64.exe --github-oauth-token="${{ secrets.EASYEPLANNER_TOKEN }}" --repo="https://github.com/sav-oss-org/EPLAN-API-bin" --tag="2.9" --release-asset=".*" "src/bin/${{env.BUILD_CONFIGURATION}}"
         md submodule/EplanIdleTimeModule/EplanIdleTimeModule/bin/${{env.BUILD_CONFIGURATION}}
         cp src/bin/${{env.BUILD_CONFIGURATION}}/* submodule/EplanIdleTimeModule/EplanIdleTimeModule/bin/${{env.BUILD_CONFIGURATION}}
 
@@ -169,7 +169,7 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: |
         md /objects_description
-        ./fetch_windows_amd64.exe --github-oauth-token="${{ secrets.EPLAN_API_BIN }}" --repo="https://github.com/savushkin-r-d/ptusa-Lua-dairy-system" --ref="master" "/objects_description"
+        ./fetch_windows_amd64.exe --github-oauth-token="${{ secrets.EASYEPLANNER_TOKEN }}" --repo="https://github.com/sav-oss-org/ptusa-Lua-dairy-system" --ref="master" "/objects_description"
         md src/bin/${{env.BUILD_CONFIGURATION}}/Lua/BaseObjectsDescriptionFiles
         copy /objects_description/EasyEplannerObjectsDescription/sys_base_objects_description.lua src/bin/${{env.BUILD_CONFIGURATION}}/Lua/BaseObjectsDescriptionFiles/sys_base_objects_description.lua
 
