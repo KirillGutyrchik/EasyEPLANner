@@ -145,7 +145,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: .\.sonar\scanner\dotnet-sonarscanner begin /k:"savushkin-r-d_EasyEPLANner" /o:"savushkin-r-d" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.vscoveragexml.reportsPaths="EasyEplanner.Tests/coverage.xml" ${{ env.PULL_REQUEST_DATA }}
+      run: .\.sonar\scanner\dotnet-sonarscanner begin /k:"sav-oss-eplanner_EasyEPLANner" /o:"sav-oss-eplanner" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.vscoveragexml.reportsPaths="EasyEplanner.Tests/coverage.xml" ${{ env.PULL_REQUEST_DATA }}
       
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
@@ -163,7 +163,7 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+      run: .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
     - name: Delete extra files
       working-directory: src/bin/${{env.BUILD_CONFIGURATION}}
