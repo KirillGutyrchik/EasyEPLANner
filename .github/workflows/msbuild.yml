@@ -165,14 +165,6 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
 
-    - name: Download sys_base_objects_description
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: |
-        md /objects_description
-        ./fetch_windows_amd64.exe --github-oauth-token="${{ secrets.EASYEPLANNER_TOKEN }}" --repo="https://github.com/sav-oss-eplanner/ptusa-Lua-dairy-system" --ref="master" "/objects_description"
-        md src/bin/${{env.BUILD_CONFIGURATION}}/Lua/BaseObjectsDescriptionFiles
-        copy /objects_description/EasyEplannerObjectsDescription/sys_base_objects_description.lua src/bin/${{env.BUILD_CONFIGURATION}}/Lua/BaseObjectsDescriptionFiles/sys_base_objects_description.lua
-
     - name: Delete extra files
       working-directory: src/bin/${{env.BUILD_CONFIGURATION}}
       run: | 
