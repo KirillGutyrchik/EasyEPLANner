@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          token: ${{ secrets.EASYEPLANNER_TOKEN }}
+          token: ${{ secrets.EPLANNER_TOKEN }}
           ref: master
           fetch-depth: 0
       - id: date
@@ -69,7 +69,7 @@ jobs:
 
       - name: Create pull request and enable merge queue
         env:
-          GH_TOKEN: ${{ secrets.EASYEPLANNER_TOKEN }}
+          GH_TOKEN: ${{ secrets.EPLANNER_TOKEN }}
           VERSION_CHANGED: ${{ steps.commit.outputs.changed }}
           VERSION_MONTH_NAME: ${{ steps.date.outputs.MonthName }}
           VERSION_YEAR: ${{ steps.date.outputs.Year }}
