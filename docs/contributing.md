@@ -2,7 +2,7 @@
 
 Пожалуйста, следуйте правилам кодирования, которые находятся [тут](https://github.com/sav-oss-eplanner/EasyEPLANner/blob/master/docs/codestyle.md).
 
-Для работы на платформе GitHub изучите [эту](https://github.com/sav-oss-eplanner/hello-tortoisegit) документацию.
+Для работы на платформе GitHub изучите [эту](https://github.com/savushkin-r-d/hello-tortoisegit) документацию.
 
 ### Если вы нашли ошибку
 
